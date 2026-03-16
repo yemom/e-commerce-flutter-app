@@ -1,0 +1,37 @@
+[
+  {
+    "id": "branch-addis-bole",
+    "name": "Addis Bole",
+    "location": "Bole Road, Addis Ababa",
+    "phoneNumber": "+251911000001",
+    "isActive": true
+  },
+  {
+    "id": "branch-addis-merkato",
+    "name": "Addis Merkato",
+    "location": "Merkato Market, Addis Ababa",
+    "phoneNumber": "+251911000002",
+    "isActive": true
+  },
+  {
+    "id": "branch-adama-central",
+    "name": "Adama Central",
+    "location": "Adama Main Road, Adama",
+    "phoneNumber": "+251911000003",
+    "isActive": true
+  },
+  {
+    "id": "branch-hawassa-tabor",
+    "name": "Hawassa Tabor",
+    "location": "Tabor District, Hawassa",
+    "phoneNumber": "+251911000004",
+    "isActive": true
+  },
+  {
+    "id": "branch-bahir-dar-piazza",
+    "name": "Bahir Dar Piazza",
+    "location": "Piazza Square, Bahir Dar",
+    "phoneNumber": "+251911000005",
+    "isActive": true
+  }
+]

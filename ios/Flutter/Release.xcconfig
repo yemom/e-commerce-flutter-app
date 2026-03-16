@@ -1,0 +1,2 @@
+#include "Generated.xcconfig"
+MAPS_API_KEY=YOUR_IOS_MAPS_API_KEY

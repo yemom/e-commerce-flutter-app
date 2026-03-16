@@ -1,0 +1,23 @@
+[
+  {
+    "id": "cat-beverages",
+    "name": "Beverages",
+    "description": "Hot and cold drinks",
+    "imageUrl": "https://images.unsplash.com/photo-1509042239860-f550ce710b93",
+    "isActive": true
+  },
+  {
+    "id": "cat-groceries",
+    "name": "Groceries",
+    "description": "Daily essentials and pantry items",
+    "imageUrl": "https://images.unsplash.com/photo-1542838132-92c53300491e",
+    "isActive": true
+  },
+  {
+    "id": "cat-household",
+    "name": "Household",
+    "description": "Cleaning and home care items",
+    "imageUrl": "https://images.unsplash.com/photo-1583947215259-38e31be8751f",
+    "isActive": true
+  }
+]

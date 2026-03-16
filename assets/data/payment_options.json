@@ -1,0 +1,20 @@
+[
+  {
+    "id": "payment-telebirr",
+    "method": "telebirr",
+    "label": "Telebirr",
+    "isEnabled": true
+  },
+  {
+    "id": "payment-cbe",
+    "method": "cbe",
+    "label": "CBE",
+    "isEnabled": true
+  },
+  {
+    "id": "payment-cod",
+    "method": "cashOnDelivery",
+    "label": "Cash on delivery",
+    "isEnabled": true
+  }
+]

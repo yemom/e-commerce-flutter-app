@@ -1,0 +1,58 @@
+[
+  {
+    "id": "order-1",
+    "branchId": "branch-addis-bole",
+    "customerId": "customer-1",
+    "items": [
+      {
+        "productId": "prod-coffee-1",
+        "productName": "Arabica Coffee",
+        "quantity": 2,
+        "unitPrice": 220
+      }
+    ],
+    "status": "pending",
+    "payment": {
+      "id": "pay-1",
+      "orderId": "order-1",
+      "method": "telebirr",
+      "amount": 490,
+      "status": "pending",
+      "transactionReference": "TX-123456",
+      "createdAt": "2026-03-13T09:30:00.000Z",
+      "verifiedAt": null
+    },
+    "subtotal": 440,
+    "deliveryFee": 50,
+    "total": 490,
+    "createdAt": "2026-03-13T09:30:00.000Z"
+  },
+  {
+    "id": "order-2",
+    "branchId": "branch-addis-merkato",
+    "customerId": "customer-2",
+    "items": [
+      {
+        "productId": "prod-tea-1",
+        "productName": "Black Tea",
+        "quantity": 2,
+        "unitPrice": 110
+      }
+    ],
+    "status": "confirmed",
+    "payment": {
+      "id": "pay-2",
+      "orderId": "order-2",
+      "method": "cbe",
+      "amount": 270,
+      "status": "verified",
+      "transactionReference": "TX-789012",
+      "createdAt": "2026-03-13T10:00:00.000Z",
+      "verifiedAt": "2026-03-13T10:05:00.000Z"
+    },
+    "subtotal": 220,
+    "deliveryFee": 50,
+    "total": 270,
+    "createdAt": "2026-03-13T10:00:00.000Z"
+  }
+]

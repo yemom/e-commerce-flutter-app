@@ -1,0 +1,83 @@
+[
+  {
+    "id": "prod-coffee-1",
+    "name": "Arabica Coffee",
+    "description": "Single-origin Ethiopian coffee beans",
+    "imageUrl": "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085",
+    "price": 220,
+    "categoryId": "cat-beverages",
+    "branchIds": ["branch-addis-bole", "branch-addis-merkato"],
+    "availableSizes": ["250g", "500g", "1kg"],
+    "availableColors": [
+      {"name": "Espresso", "hexCode": "#2F1E13"},
+      {"name": "Cream", "hexCode": "#DCC7A1"},
+      {"name": "Midnight", "hexCode": "#0F172A"}
+    ],
+    "stockByBranch": {
+      "branch-addis-bole": 12,
+      "branch-addis-merkato": 8
+    },
+    "isAvailable": true
+  },
+  {
+    "id": "prod-tea-1",
+    "name": "Black Tea",
+    "description": "Loose leaf tea",
+    "imageUrl": "https://images.unsplash.com/photo-1597481499750-3e6b22637e12",
+    "price": 110,
+    "categoryId": "cat-beverages",
+    "branchIds": ["branch-addis-bole", "branch-adama-central", "branch-bahir-dar-piazza"],
+    "availableSizes": ["20 bags", "40 bags", "Jar"],
+    "availableColors": [
+      {"name": "Olive", "hexCode": "#53624B"},
+      {"name": "Sand", "hexCode": "#E4D5AF"},
+      {"name": "Ink", "hexCode": "#202B3C"}
+    ],
+    "stockByBranch": {
+      "branch-addis-bole": 20,
+      "branch-adama-central": 14,
+      "branch-bahir-dar-piazza": 6
+    },
+    "isAvailable": true
+  },
+  {
+    "id": "prod-oil-1",
+    "name": "Sunflower Oil",
+    "description": "1L cooking oil",
+    "imageUrl": "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5",
+    "price": 380,
+    "categoryId": "cat-groceries",
+    "branchIds": ["branch-addis-merkato", "branch-hawassa-tabor"],
+    "availableSizes": ["1L", "2L", "5L"],
+    "availableColors": [
+      {"name": "Gold", "hexCode": "#EAB308"},
+      {"name": "Amber", "hexCode": "#B45309"},
+      {"name": "Olive", "hexCode": "#61764B"}
+    ],
+    "stockByBranch": {
+      "branch-addis-merkato": 9,
+      "branch-hawassa-tabor": 5
+    },
+    "isAvailable": true
+  },
+  {
+    "id": "prod-bag-1",
+    "name": "Travel Backpack",
+    "description": "Water resistant urban day pack",
+    "imageUrl": "https://images.unsplash.com/photo-1542291026-7eec264c27ff",
+    "price": 1250,
+    "categoryId": "cat-household",
+    "branchIds": ["branch-addis-bole", "branch-bahir-dar-piazza"],
+    "availableSizes": ["Small", "Medium", "Large"],
+    "availableColors": [
+      {"name": "Coral", "hexCode": "#F97316"},
+      {"name": "Graphite", "hexCode": "#1F2937"},
+      {"name": "Stone", "hexCode": "#CBD5E1"}
+    ],
+    "stockByBranch": {
+      "branch-addis-bole": 4,
+      "branch-bahir-dar-piazza": 2
+    },
+    "isAvailable": true
+  }
+]
