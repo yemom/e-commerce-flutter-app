@@ -1,20 +1,103 @@
-# e_commerce_app_with_django
+E-Commerce Flutter App
+Author
 
-A new Flutter project.
+Name: Esrom Basazinaw
+GitHub: https://github.com/yemom
 
-## Getting Started
+Project Repository: https://github.com/yemom/e-commerce-flutter-app
 
-This project is a starting point for a Flutter application.
+Project Description
 
-A few resources to get you started if this is your first Flutter project:
+This project is a mobile E-Commerce application built with Flutter.
+The application demonstrates a modern shopping UI where users can browse products, view product details, and manage a shopping cart.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+The app is designed as a cross-platform mobile application that can run on both Android and iOS devices using a single codebase.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+This project is mainly intended for learning Flutter UI design and mobile app architecture.
 
-## Payment Gateway Configuration
+Features
+Product listing screen
+Product detail view
+Shopping cart interface
+Modern Flutter UI components
+Cross-platform mobile support (Android & iOS)
+Project Structure
+e-commerce-flutter-app
+│
+├── android/              # Android platform files
+├── ios/                  # iOS platform files
+├── lib/                  # Main Flutter source code
+│   ├── main.dart         # Application entry point
+│   ├── models/           # Product and data models
+│   ├── pages/            # App screens
+│   ├── widgets/          # Reusable UI components
+│   └── theme/            # UI theme configuration
+│
+├── assets/               # Images and static resources
+├── test/                 # Unit and widget tests
+├── pubspec.yaml          # Project dependencies
+└── README.md
+Requirements
 
-See [docs/payment_gateway_setup.md](docs/payment_gateway_setup.md) for Telebirr and CBE setup using environment variables and secure key handling.
+Before running the project install:
+
+Flutter SDK
+Dart SDK
+Android Studio or VS Code
+Android Emulator or Physical Device
+
+Check Flutter installation:
+
+flutter doctor
+How to Install the Project
+
+Clone the repository:
+
+git clone https://github.com/yemom/e-commerce-flutter-app.git
+
+Navigate to the project folder:
+
+cd e-commerce-flutter-app
+
+Install dependencies:
+
+flutter pub get
+How to Run the Application
+
+Run the app using:
+
+flutter run
+
+This command will:
+
+Build the Flutter application
+Launch it on an emulator or connected device.
+How to Build APK
+
+To generate an Android APK file:
+
+flutter build apk
+
+The APK will be available in:
+
+build/app/outputs/flutter-apk/
+How to Run Tests
+
+To run the Flutter test suite:
+
+flutter test
+
+The tests are located in:
+
+test/
+Technologies Used
+Flutter
+Dart
+Material UI
+Android / iOS SDK
+Future Improvements
+User authentication
+Product search
+Payment integration
+Backend API integration
+Order management
