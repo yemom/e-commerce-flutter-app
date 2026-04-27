@@ -57,6 +57,7 @@ class Product {
     required this.isAvailable,
     this.availableSizes = const [],
     this.availableColors = const [],
+    this.imageUrls = const [],
     this.selectedSize,
     this.selectedColor,
   });
@@ -72,6 +73,7 @@ class Product {
   final bool isAvailable;
   final List<String> availableSizes;
   final List<ProductColorOption> availableColors;
+  final List<String> imageUrls;
   final String? selectedSize;
   final ProductColorOption? selectedColor;
 
@@ -87,6 +89,7 @@ class Product {
     bool? isAvailable,
     List<String>? availableSizes,
     List<ProductColorOption>? availableColors,
+    List<String>? imageUrls,
     String? selectedSize,
     bool clearSelectedSize = false,
     ProductColorOption? selectedColor,
@@ -104,6 +107,7 @@ class Product {
       isAvailable: isAvailable ?? this.isAvailable,
       availableSizes: availableSizes ?? this.availableSizes,
       availableColors: availableColors ?? this.availableColors,
+      imageUrls: imageUrls ?? this.imageUrls,
       selectedSize: clearSelectedSize ? null : selectedSize ?? this.selectedSize,
       selectedColor: clearSelectedColor ? null : selectedColor ?? this.selectedColor,
     );
@@ -122,6 +126,7 @@ class Product {
       'isAvailable': isAvailable,
       'availableSizes': availableSizes,
       'availableColors': availableColors.map((color) => color.toJson()).toList(),
+      'imageUrls': imageUrls,
       'selectedSize': selectedSize,
       'selectedColor': selectedColor?.toJson(),
     };
@@ -142,6 +147,7 @@ class Product {
       availableColors: (json['availableColors'] as List<dynamic>? ?? const [])
           .map((color) => ProductColorOption.fromJson(color as Map<String, dynamic>))
           .toList(),
+      imageUrls: List<String>.from(json['imageUrls'] as List<dynamic>? ?? const []),
       selectedSize: json['selectedSize'] as String?,
       selectedColor: json['selectedColor'] == null
           ? null
@@ -165,6 +171,7 @@ class Product {
             isAvailable == other.isAvailable &&
             listEquals(availableSizes, other.availableSizes) &&
             listEquals(availableColors, other.availableColors) &&
+            listEquals(imageUrls, other.imageUrls) &&
             selectedSize == other.selectedSize &&
             selectedColor == other.selectedColor;
   }
@@ -184,6 +191,7 @@ class Product {
         isAvailable,
         Object.hashAll(availableSizes),
         Object.hashAll(availableColors),
+        Object.hashAll(imageUrls),
         selectedSize,
         selectedColor,
       );

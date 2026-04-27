@@ -22,10 +22,15 @@ function sanitizeFileName(name) {
     .replace(/^-|-$/g, '');
 }
 
+function isAllowedImageExtension(name) {
+  const extension = path.extname(name || '').toLowerCase();
+  return ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.heic', '.heif'].includes(extension);
+}
+
 function resolveExtension(originalName, mimeType) {
   // Prefer extension from filename when valid.
   const parsedExt = path.extname(originalName || '').toLowerCase();
-  if (['.jpg', '.jpeg', '.png', '.webp', '.gif'].includes(parsedExt)) {
+  if (['.jpg', '.jpeg', '.png', '.webp', '.gif', '.heic', '.heif'].includes(parsedExt)) {
     return parsedExt;
   }
 
@@ -65,8 +70,13 @@ const upload = multer({
     fileSize: 10 * 1024 * 1024,
   },
   fileFilter: (req, file, cb) => {
-    // Only image mime types are accepted.
-    if (!file.mimetype || !file.mimetype.startsWith('image/')) {
+    // Accept standard image MIME types and Android generic uploads with image extensions.
+    const mimeType = (file.mimetype || '').toLowerCase();
+    const hasImageMime = mimeType.startsWith('image/');
+    const hasImageExtension = isAllowedImageExtension(file.originalname || '');
+    const isGenericBinary = mimeType === '' || mimeType === 'application/octet-stream';
+
+    if (!hasImageMime && !(isGenericBinary && hasImageExtension)) {
       cb(new Error('Only image uploads are allowed.'));
       return;
     }

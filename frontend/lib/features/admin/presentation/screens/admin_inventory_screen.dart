@@ -20,7 +20,8 @@ class AdminInventoryScreen extends ConsumerStatefulWidget {
   final String? branchId;
 
   @override
-  ConsumerState<AdminInventoryScreen> createState() => _AdminInventoryScreenState();
+  ConsumerState<AdminInventoryScreen> createState() =>
+      _AdminInventoryScreenState();
 }
 
 class _AdminInventoryScreenState extends ConsumerState<AdminInventoryScreen> {
@@ -43,34 +44,83 @@ class _AdminInventoryScreenState extends ConsumerState<AdminInventoryScreen> {
     await notifier.loadAllProducts();
   }
 
-  Future<void> _updatePrice(Product product) async {
-    final controller = TextEditingController(text: product.price.toStringAsFixed(2));
-    final shouldSave = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text('Update Price - ${product.name}'),
-        content: TextField(
-          controller: controller,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: const InputDecoration(labelText: 'New price'),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: const Text('Cancel')),
-          ElevatedButton(onPressed: () => Navigator.of(dialogContext).pop(true), child: const Text('Save')),
-        ],
-      ),
+  Future<void> _updateProduct(Product product) async {
+    final priceController = TextEditingController(
+      text: product.price.toStringAsFixed(2),
     );
 
-    if (shouldSave != true) {
-      return;
-    }
+    final descriptionController = TextEditingController(
+      text: product.description,
+    );
 
-    final value = double.tryParse(controller.text.trim());
-    if (value == null) {
-      return;
-    }
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text('Update Product - ${product.name}'),
 
-    await ref.read(productRepositoryProvider).updateProduct(product.copyWith(price: value));
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 🔹 DESCRIPTION FIELD
+              TextField(
+                controller: descriptionController,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'Update Description',
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // 🔹 PRICE FIELD
+              TextField(
+                controller: priceController,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: const InputDecoration(labelText: 'New Price'),
+              ),
+            ],
+          ),
+
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancel'),
+            ),
+
+            ElevatedButton(
+              onPressed: () {
+                final price = double.tryParse(priceController.text.trim());
+
+                if (price == null) return;
+
+                Navigator.of(dialogContext).pop({
+                  "price": price,
+                  "description": descriptionController.text.trim(),
+                });
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+
+    //  user cancelled
+    if (result == null) return;
+
+    // update product
+    await ref
+        .read(productRepositoryProvider)
+        .updateProduct(
+          product.copyWith(
+            price: result["price"],
+            description: result["description"],
+          ),
+        );
+
     await _loadProducts();
   }
 
@@ -100,12 +150,18 @@ class _AdminInventoryScreenState extends ConsumerState<AdminInventoryScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.inventory_2_outlined, color: Color(0xFF1D4ED8)),
+                  const Icon(
+                    Icons.inventory_2_outlined,
+                    color: Color(0xFF1D4ED8),
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       '${products.length} product(s) in inventory',
-                      style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF1E3A8A)),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1E3A8A),
+                      ),
                     ),
                   ),
                 ],
@@ -148,15 +204,21 @@ class _AdminInventoryScreenState extends ConsumerState<AdminInventoryScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(product.name, style: Theme.of(context).textTheme.titleSmall),
+                            Text(
+                              product.name,
+                              style: Theme.of(context).textTheme.titleSmall,
+                            ),
                             const SizedBox(height: 2),
-                            Text(formatPrice(product.price), style: const TextStyle(color: Color(0xFF1D4ED8))),
+                            Text(
+                              formatPrice(product.price),
+                              style: const TextStyle(color: Color(0xFF1D4ED8)),
+                            ),
                           ],
                         ),
                       ),
                       IconButton(
-                        tooltip: 'Update price',
-                        onPressed: () => _updatePrice(product),
+                        tooltip: 'Update product',
+                        onPressed: () => _updateProduct(product),
                         icon: const Icon(Icons.edit_outlined),
                       ),
                       IconButton(

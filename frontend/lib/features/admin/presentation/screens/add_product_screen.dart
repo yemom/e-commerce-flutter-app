@@ -52,12 +52,18 @@ class _AddProductScreenState extends State<AddProductScreen> {
   // Separate loading state so admins can still edit fields while image upload runs.
   bool _isUploadingImage = false;
 
-  static const List<String> _sizePresets = ['Small', 'Medium', 'Large', '1kg', '2L'];
+  static const List<String> _sizePresets = ['Small', 'Medium', 'Large', '1kg', '2L', '13"', '14.1"', '15.6"','33"','42"','55"'];
   static const List<ProductColorOption> _colorPresets = [
     ProductColorOption(name: 'Coral', hexCode: '#F97316'),
     ProductColorOption(name: 'Graphite', hexCode: '#1F2937'),
     ProductColorOption(name: 'Cream', hexCode: '#DCC7A1'),
     ProductColorOption(name: 'Olive', hexCode: '#61764B'),
+    ProductColorOption(name: 'White', hexCode: '#F8FAFC'),
+    ProductColorOption(name: 'Black', hexCode: '#000000'),
+    ProductColorOption(name: 'Gray', hexCode: '#6B7280'),
+    ProductColorOption(name: 'Silver', hexCode: '#C0C0C0'),
+    ProductColorOption(name: 'Navy', hexCode: '#000080'),
+    ProductColorOption(name: 'Maroon', hexCode: '#800000')
   ];
 
   @override
@@ -422,7 +428,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
     try {
       // Open system file picker.
       final result = await FilePicker.pickFiles(
-        type: FileType.image,
+        type: FileType.custom,
+        allowedExtensions: const ['jpg', 'jpeg', 'png', 'webp', 'gif'],
         withData: true,
       );
 
@@ -439,14 +446,26 @@ class _AddProductScreenState extends State<AddProductScreen> {
       
       final file = result.files.first;
       final bytes = file.bytes;
+      final extension = _fileExtension(file.name.isNotEmpty ? file.name : file.path ?? '');
+
+      if (!_isSupportedImageExtension(extension)) {
+        throw const FormatException(
+          'Only JPG, JPEG, PNG, WEBP, and GIF images are supported for device selection.',
+        );
+      }
       
       if (bytes == null) {
         throw const FormatException('Could not read file bytes. Ensure file is not empty or corrupted.');
       }
 
+      final safeFileName = _normalizeImageFileName(
+        preferredName: file.name,
+        fallbackPath: file.path ?? '',
+      );
+
       final uploadedUrl = await widget.onUploadImage(
         bytes: bytes,
-        fileName: file.name.isNotEmpty ? file.name : _safeFileNameFromPath(file.path ?? ''),
+        fileName: safeFileName,
       );
 
       if (!mounted) {
@@ -506,6 +525,10 @@ String _friendlyUploadErrorMessage(Object error) {
     }
   }
 
+  if (error is FormatException && error.message.isNotEmpty) {
+    return error.message;
+  }
+
   return 'Unable to upload image. Please try again.';
 }
 
@@ -519,6 +542,45 @@ String _safeFileNameFromPath(String path) {
 
   final candidate = segments.last.trim();
   return candidate.isEmpty ? 'product-image.jpg' : candidate;
+}
+
+String _normalizeImageFileName({
+  required String preferredName,
+  required String fallbackPath,
+}) {
+  final raw = preferredName.trim().isNotEmpty
+      ? preferredName.trim()
+      : _safeFileNameFromPath(fallbackPath);
+
+  final normalized = raw.replaceAll('\\', '/');
+  final baseName = normalized.split('/').last.trim();
+  final lower = baseName.toLowerCase();
+
+  if (lower.endsWith('.jpg') ||
+      lower.endsWith('.jpeg') ||
+      lower.endsWith('.png') ||
+      lower.endsWith('.webp') ||
+      lower.endsWith('.gif') ||
+      lower.endsWith('.heic') ||
+      lower.endsWith('.heif')) {
+    return baseName;
+  }
+
+  return '${baseName.isEmpty ? 'product-image' : baseName}.jpg';
+}
+
+String _fileExtension(String value) {
+  final normalized = value.replaceAll('\\', '/');
+  final fileName = normalized.split('/').last.trim().toLowerCase();
+  final dotIndex = fileName.lastIndexOf('.');
+  if (dotIndex < 0 || dotIndex == fileName.length - 1) {
+    return '';
+  }
+  return fileName.substring(dotIndex);
+}
+
+bool _isSupportedImageExtension(String extension) {
+  return const {'.jpg', '.jpeg', '.png', '.webp', '.gif'}.contains(extension.toLowerCase());
 }
 
 Color _hexToColor(String hexCode) {

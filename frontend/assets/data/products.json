@@ -72,7 +72,14 @@
     "availableColors": [
       {"name": "Coral", "hexCode": "#F97316"},
       {"name": "Graphite", "hexCode": "#1F2937"},
-      {"name": "Stone", "hexCode": "#CBD5E1"}
+      {"name": "Stone", "hexCode": "#CBD5E1"},
+      {"name": "White", "hexCode": "#F8FAFC"},
+      {"name": "Black", "hexCode": "#000000"},
+      {"name": "Gray", "hexCode": "#6B7280"},
+      {"name": "Silver", "hexCode": "#C0C0C0"},
+      {"name": "Navy", "hexCode": "#000080"},
+      {"name": "Olive", "hexCode": "#808000"},
+      {"name": "Maroon", "hexCode": "#800000"}
     ],
     "stockByBranch": {
       "branch-addis-bole": 4,

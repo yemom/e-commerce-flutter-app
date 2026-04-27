@@ -3,6 +3,7 @@ library;
 import 'package:flutter/material.dart';
 
 import 'package:e_commerce_app_with_django/core/presentation/widgets/app_formatters.dart';
+import 'package:e_commerce_app_with_django/core/presentation/widgets/app_network_image.dart';
 import 'package:e_commerce_app_with_django/features/orders/domain/models/order.dart';
 import 'package:e_commerce_app_with_django/features/payment/domain/models/payment.dart';
 
@@ -199,16 +200,11 @@ class _CheckoutScreenBodyState extends State<_CheckoutScreenBody> {
                             borderRadius: BorderRadius.circular(14),
                           ),
                           child: option.iconUrl?.isNotEmpty == true
-                              ? ClipRRect(
+                              ? AppNetworkImage(
+                                  imageUrl: option.iconUrl!,
+                                  fit: BoxFit.cover,
                                   borderRadius: BorderRadius.circular(14),
-                                  child: Image.network(
-                                    option.iconUrl!,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => Icon(
-                                      _paymentIcon(option.method),
-                                      color: const Color(0xFF5E56E7),
-                                    ),
-                                  ),
+                                  placeholderIcon: _paymentIcon(option.method),
                                 )
                               : Icon(_paymentIcon(option.method), color: const Color(0xFF5E56E7)),
                         ),
