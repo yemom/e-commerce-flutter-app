@@ -49,6 +49,7 @@ class AdminDashboardWideBodyLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Wide screens use a side rail plus a content column so the dashboard feels dense without becoming cramped.
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -129,6 +130,7 @@ class AdminDashboardStackedBodyLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Narrow screens stack the same content vertically so the most important actions remain reachable on phones and small tablets.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

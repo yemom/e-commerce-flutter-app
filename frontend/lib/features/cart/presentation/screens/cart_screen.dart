@@ -3,7 +3,7 @@ library;
 import 'package:flutter/material.dart';
 
 import 'package:e_commerce_app_with_django/core/presentation/widgets/app_formatters.dart';
-import 'package:e_commerce_app_with_django/core/presentation/widgets/app_network_image.dart';
+import 'package:e_commerce_app_with_django/core/presentation/widgets/product_image_gallery.dart';
 import 'package:e_commerce_app_with_django/features/cart/presentation/providers/cart_provider.dart';
 import 'package:e_commerce_app_with_django/features/products/domain/models/product.dart';
 
@@ -84,78 +84,87 @@ class CartScreen extends StatelessWidget {
                               borderRadius: BorderRadius.circular(28),
                               border: Border.all(color: const Color(0xFFE7ECF3)),
                             ),
-                            child: Row(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 SizedBox(
-                                  width: 72,
-                                  height: 72,
-                                  child: AppNetworkImage(
-                                    imageUrl: item.product.imageUrl,
-                                    borderRadius: BorderRadius.circular(22),
+                                  height: 88,
+                                  child: ProductImageGallery(
+                                    imageUrls: item.product.imageUrls,
+                                    fallbackImageUrl: item.product.imageUrl,
+                                    height: 88,
+                                    itemWidth: 128,
+                                    borderRadius: BorderRadius.circular(20),
+                                    placeholderIcon: Icons.shopping_bag_outlined,
                                   ),
                                 ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(item.product.name, style: Theme.of(context).textTheme.titleMedium),
-                                      const SizedBox(height: 4),
-                                      if (_variantLabel(item.product).isNotEmpty)
-                                        Padding(
-                                          padding: const EdgeInsets.only(bottom: 4),
-                                          child: Text(
-                                            _variantLabel(item.product),
-                                            style: const TextStyle(fontSize: 12, color: Color(0xFF7C8799)),
-                                          ),
-                                        ),
-                                      Text(
-                                        formatPrice(item.product.price),
-                                        style: const TextStyle(
-                                          color: Color(0xFF5E56E7),
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 10),
-                                      Container(
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFF2F3F8),
-                                          borderRadius: BorderRadius.circular(999),
-                                        ),
-                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            IconButton(
-                                              visualDensity: VisualDensity.compact,
-                                              onPressed: item.quantity > 1
-                                                  ? () => onQuantityChanged(
-                                                        productId: itemKey,
-                                                        quantity: item.quantity - 1,
-                                                      )
-                                                  : null,
-                                              icon: const Icon(Icons.remove_rounded),
-                                            ),
-                                            Text('${item.quantity}', style: const TextStyle(fontWeight: FontWeight.w700)),
-                                            IconButton(
-                                              key: Key('cart.increment.$itemKey'),
-                                              visualDensity: VisualDensity.compact,
-                                              onPressed: () => onQuantityChanged(
-                                                productId: itemKey,
-                                                quantity: item.quantity + 1,
+                                const SizedBox(height: 14),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(item.product.name, style: Theme.of(context).textTheme.titleMedium),
+                                          const SizedBox(height: 4),
+                                          if (_variantLabel(item.product).isNotEmpty)
+                                            Padding(
+                                              padding: const EdgeInsets.only(bottom: 4),
+                                              child: Text(
+                                                _variantLabel(item.product),
+                                                style: const TextStyle(fontSize: 12, color: Color(0xFF7C8799)),
                                               ),
-                                              icon: const Icon(Icons.add_rounded),
                                             ),
-                                          ],
-                                        ),
+                                          Text(
+                                            formatPrice(item.product.price),
+                                            style: const TextStyle(
+                                              color: Color(0xFF5E56E7),
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 10),
+                                          Container(
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFF2F3F8),
+                                              borderRadius: BorderRadius.circular(999),
+                                            ),
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                IconButton(
+                                                  visualDensity: VisualDensity.compact,
+                                                  onPressed: item.quantity > 1
+                                                      ? () => onQuantityChanged(
+                                                            productId: itemKey,
+                                                            quantity: item.quantity - 1,
+                                                          )
+                                                      : null,
+                                                  icon: const Icon(Icons.remove_rounded),
+                                                ),
+                                                Text('${item.quantity}', style: const TextStyle(fontWeight: FontWeight.w700)),
+                                                IconButton(
+                                                  key: Key('cart.increment.$itemKey'),
+                                                  visualDensity: VisualDensity.compact,
+                                                  onPressed: () => onQuantityChanged(
+                                                    productId: itemKey,
+                                                    quantity: item.quantity + 1,
+                                                  ),
+                                                  icon: const Icon(Icons.add_rounded),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    ],
-                                  ),
-                                ),
-                                IconButton(
-                                  key: Key('cart.remove.$itemKey'),
-                                  onPressed: () => onRemoveProduct(itemKey),
-                                  icon: const Icon(Icons.close_rounded),
+                                    ),
+                                    IconButton(
+                                      key: Key('cart.remove.$itemKey'),
+                                      onPressed: () => onRemoveProduct(itemKey),
+                                      icon: const Icon(Icons.close_rounded),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),

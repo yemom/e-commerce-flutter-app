@@ -1,5 +1,6 @@
 /// Lets existing users sign in to the app.
 library;
+
 import 'package:flutter/material.dart';
 
 /// Screen for Login.
@@ -12,7 +13,11 @@ class LoginScreen extends StatefulWidget {
     this.error,
   });
 
-  final Future<void> Function({required String identifier, required String password}) onLogin;
+  final Future<void> Function({
+    required String identifier,
+    required String password,
+  })
+  onLogin;
   final VoidCallback? onCreateAccount;
   final VoidCallback? onForgotPassword;
   final String? error;
@@ -91,12 +96,16 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: CircleAvatar(
                           radius: 24,
                           backgroundColor: Colors.white,
-                          child: Icon(Icons.shopping_bag_outlined, color: Color(0xFF5E56E7), size: 26),
+                          child: Icon(
+                            Icons.shopping_bag_outlined,
+                            color: Color(0xFF5E56E7),
+                            size: 26,
+                          ),
                         ),
                       ),
                       SizedBox(height: 18),
                       Text(
-                        'Kutuku',
+                        'Gulit Gebeya',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 34,
@@ -130,7 +139,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Login Account', style: Theme.of(context).textTheme.titleLarge),
+                      Text(
+                        'Login Account',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
                       const SizedBox(height: 6),
                       const Text('Email or phone number'),
                       const SizedBox(height: 16),
@@ -149,12 +161,18 @@ class _LoginScreenState extends State<LoginScreen> {
                           hintText: 'Password',
                           prefixIcon: const Icon(Icons.lock_outline_rounded),
                           suffixIcon: IconButton(
-                            tooltip: _obscurePassword ? 'Show password' : 'Hide password',
+                            tooltip: _obscurePassword
+                                ? 'Show password'
+                                : 'Hide password',
                             onPressed: () {
-                              setState(() => _obscurePassword = !_obscurePassword);
+                              setState(
+                                () => _obscurePassword = !_obscurePassword,
+                              );
                             },
                             icon: Icon(
-                              _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                              _obscurePassword
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
                             ),
                           ),
                         ),
@@ -171,7 +189,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         // Shows friendly error text received from auth provider.
                         Padding(
                           padding: const EdgeInsets.only(bottom: 12),
-                          child: Text(widget.error!, style: const TextStyle(color: Colors.red)),
+                          child: Text(
+                            widget.error!,
+                            style: const TextStyle(color: Colors.red),
+                          ),
                         ),
                       ElevatedButton(
                         onPressed: _isSubmitting
@@ -189,7 +210,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                   setState(() => _isSubmitting = false);
                                 }
                               },
-                        child: Text(_isSubmitting ? 'Signing in...' : 'Sign in'),
+                        child: Text(
+                          _isSubmitting ? 'Signing in...' : 'Sign in',
+                        ),
                       ),
                       const SizedBox(height: 16),
                       const Row(
@@ -205,9 +228,19 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 16),
                       Row(
                         children: [
-                          Expanded(child: _SocialButton(icon: Icons.g_mobiledata_rounded, label: 'Google')),
+                          Expanded(
+                            child: _SocialButton(
+                              icon: Icons.g_mobiledata_rounded,
+                              label: 'Google',
+                            ),
+                          ),
                           const SizedBox(width: 12),
-                          Expanded(child: _SocialButton(icon: Icons.facebook_rounded, label: 'Facebook')),
+                          Expanded(
+                            child: _SocialButton(
+                              icon: Icons.facebook_rounded,
+                              label: 'Facebook',
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 18),

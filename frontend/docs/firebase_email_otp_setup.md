@@ -7,9 +7,11 @@ To actually send the email, install the Firebase Extension `Trigger Email` on th
 ## Required Firebase Extension
 
 Install:
+
 - `firebase/firestore-send-email`
 
 Recommended collection settings:
+
 - Mail collection: `mail`
 - Use your SMTP provider or email service credentials during extension setup.
 
@@ -21,9 +23,9 @@ The app writes documents in this shape:
 {
   "to": ["user@example.com"],
   "message": {
-    "subject": "Your Kutuku verification code",
-    "text": "Your Kutuku verification code is 1234. It expires in 10 minutes.",
-    "html": "<p>Your Kutuku verification code is <strong>1234</strong>.</p><p>It expires in 10 minutes.</p>"
+    "subject": "Your Gulit verification code",
+    "text": "Your Gulit verification code is 1234. It expires in 10 minutes.",
+    "html": "<p>Your Gulit verification code is <strong>1234</strong>.</p><p>It expires in 10 minutes.</p>"
   }
 }
 ```
@@ -31,10 +33,12 @@ The app writes documents in this shape:
 ## Verification Code Storage
 
 The app stores the active code here:
+
 - Collection: `auth_verification_codes`
 - Document ID: Firebase Auth user id
 
 Fields:
+
 - `userId`
 - `email`
 - `code`

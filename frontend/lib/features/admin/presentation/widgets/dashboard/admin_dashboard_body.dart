@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:e_commerce_app_with_django/features/admin/presentation/models/admin_dashboard_view_data.dart';
 import 'package:e_commerce_app_with_django/features/admin/presentation/providers/admin_settings_provider.dart';
 import 'package:e_commerce_app_with_django/features/admin/presentation/services/admin_dashboard_view_data_service.dart';
 import 'package:e_commerce_app_with_django/features/admin/presentation/widgets/dashboard/admin_dashboard_analytics_board.dart';
@@ -63,6 +62,8 @@ class AdminDashboardBody extends StatelessWidget {
       categories: adminCategories,
       adminAccounts: adminAccounts,
     );
+    final currentAdminName =
+    adminAccounts.isNotEmpty ? adminAccounts.first.name : 'Admin';
 
     return Container(
       decoration: const BoxDecoration(
@@ -87,6 +88,7 @@ class AdminDashboardBody extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(12, 12, 12, 20),
                 children: [
+                  // The hero card gives the admin a quick snapshot of the current operational state and fetch the current admin name from the admin accounts list.
                   AdminDashboardHeroCard(
                     dashboardTitle: dashboardTitle,
                     branchCount: branches.length,
@@ -96,9 +98,10 @@ class AdminDashboardBody extends StatelessWidget {
                     paymentCount: adminPaymentOptions.length,
                     pendingAdminCount: viewData.pendingRequests.length,
                     activeAdminCount: viewData.activeAdmins.length,
-                    sectionTags: roleSections,
+                    sectionTags: roleSections, adminName: currentAdminName,
                   ),
                   const SizedBox(height: 14),
+                  // Analytics stay near the top because they explain why the rest of the dashboard matters.
                   AdminDashboardAnalyticsBoard(
                     analytics: viewData.analytics,
                     branchCount: branches.length,
@@ -109,6 +112,7 @@ class AdminDashboardBody extends StatelessWidget {
                     activeAdminCount: viewData.activeAdmins.length,
                   ),
                   const SizedBox(height: 14),
+                  // Below the analytics, the layout splits into either a wide rail or a stacked mobile flow.
                   if (isWide)
                     AdminDashboardWideBodyLayout(
                       roleSections: roleSections,

@@ -38,6 +38,17 @@ function createProductsRouter() {
     res.json(products.map(serializeDocument));
   });
 
+  router.get('/products/:productId', async (req, res) => {
+    const product = await Product.findOne({ id: req.params.productId });
+
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found.' });
+    }
+
+    // Return the full stored document so the detail screen can render the latest image gallery.
+    return res.json(serializeDocument(product));
+  });
+
   router.post('/products', async (req, res) => {
     requireFields(req.body, ['id', 'name', 'categoryId']);
     // Upsert allows idempotent product creation from admin tooling.
@@ -46,6 +57,7 @@ function createProductsRouter() {
       name: req.body.name,
       description: req.body.description ?? '',
       imageUrl: req.body.imageUrl ?? '',
+      imageUrls: req.body.imageUrls ?? [],
       price: req.body.price ?? 0,
       categoryId: req.body.categoryId,
       branchIds: req.body.branchIds ?? [],

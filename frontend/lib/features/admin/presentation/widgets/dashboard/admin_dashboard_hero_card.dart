@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 class AdminDashboardHeroCard extends StatelessWidget {
   const AdminDashboardHeroCard({
     super.key,
+    required this.adminName,
     required this.dashboardTitle,
     required this.branchCount,
     required this.orderCount,
@@ -14,6 +15,7 @@ class AdminDashboardHeroCard extends StatelessWidget {
     required this.sectionTags,
   });
 
+  final String? adminName;
   final String dashboardTitle;
   final int branchCount;
   final int orderCount;
@@ -23,6 +25,8 @@ class AdminDashboardHeroCard extends StatelessWidget {
   final int pendingAdminCount;
   final int activeAdminCount;
   final List<String> sectionTags;
+
+ 
 
   @override
   Widget build(BuildContext context) {
@@ -55,8 +59,9 @@ class AdminDashboardHeroCard extends StatelessWidget {
                       style: TextStyle(color: Color(0xFFFFF2E7), fontSize: 12),
                     ),
                     const SizedBox(height: 6),
+                    //display the current admin name in the hero card title if available, otherwise default to "Admin".
                     Text(
-                      dashboardTitle,
+                      'Welcome, $adminName',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 24,

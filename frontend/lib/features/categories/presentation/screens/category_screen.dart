@@ -36,6 +36,7 @@ class CategoryScreen extends StatelessWidget {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // The header keeps the screen friendly and helps the user understand they are browsing by category.
                   Row(
                     children: [
                       Container(
@@ -93,6 +94,7 @@ class CategoryScreen extends StatelessWidget {
 
             final category = categories[index - 1];
             final isSelected = category.id == selectedCategoryId;
+            // Each category tile uses a full-width hero-style card so the image and text stay readable on small screens.
             return InkWell(
               key: Key('category.item.${category.id}'),
               borderRadius: BorderRadius.circular(22),

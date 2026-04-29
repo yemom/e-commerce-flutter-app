@@ -1,9 +1,10 @@
 /// Shows one product in detail with variant and add-to-cart actions.
 library;
+
 import 'package:flutter/material.dart';
 
 import 'package:e_commerce_app_with_django/core/presentation/widgets/app_formatters.dart';
-import 'package:e_commerce_app_with_django/core/presentation/widgets/app_network_image.dart';
+import 'package:e_commerce_app_with_django/core/presentation/widgets/product_image_gallery.dart';
 import 'package:e_commerce_app_with_django/features/products/domain/models/product.dart';
 
 /// Screen for Product Detail.
@@ -12,35 +13,94 @@ class ProductDetailScreen extends StatefulWidget {
     super.key,
     required this.product,
     required this.onAddToCart,
+    this.onFetchProduct,
   });
 
   final Product product;
   final ValueChanged<Product> onAddToCart;
+  final Future<Product> Function(String productId)? onFetchProduct;
 
   @override
   State<ProductDetailScreen> createState() => _ProductDetailScreenState();
 }
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
+  Product? _loadedProduct;
   late String? _selectedSize;
   late ProductColorOption? _selectedColor;
   int _quantity = 1;
 
+  Product get _product => _loadedProduct ?? widget.product;
+
   @override
   void initState() {
     super.initState();
+    _loadedProduct = widget.product;
+    _refreshProductFromServer();
     // Preselect first available variant values to reduce taps for the user.
-    _selectedSize = widget.product.selectedSize ??
-        (widget.product.availableSizes.isEmpty ? null : widget.product.availableSizes.first);
-    _selectedColor = widget.product.selectedColor ??
-        (widget.product.availableColors.isEmpty ? null : widget.product.availableColors.first);
+    _selectedSize =
+        _product.selectedSize ??
+        (_product.availableSizes.isEmpty
+            ? null
+            : _product.availableSizes.first);
+    _selectedColor =
+        _product.selectedColor ??
+        (_product.availableColors.isEmpty
+            ? null
+            : _product.availableColors.first);
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  Future<void> _refreshProductFromServer() async {
+    final fetchProduct = widget.onFetchProduct;
+    if (fetchProduct == null) {
+      return;
+    }
+
+    try {
+      final freshProduct = await fetchProduct(widget.product.id);
+      // Log fetched image URLs for debugging when running locally.
+      // This helps verify the backend is returning the `imageUrls` array.
+      // Use `flutter run` console to view these messages.
+      // Example output: "ProductDetail fetched imageUrls: [https://..., https://...]"
+      // Keep this print in place until you confirm images appear in the UI.
+      // It is safe to remove once verified.
+      // ignore: avoid_print
+      debugPrint('ProductDetail fetched imageUrls: ${freshProduct.imageUrls}');
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _loadedProduct = freshProduct;
+        _selectedSize =
+            freshProduct.selectedSize ??
+            (freshProduct.availableSizes.isEmpty
+                ? null
+                : freshProduct.availableSizes.first);
+        _selectedColor =
+            freshProduct.selectedColor ??
+            (freshProduct.availableColors.isEmpty
+                ? null
+                : freshProduct.availableColors.first);
+      });
+    } catch (_) {
+      // If the refresh fails, fall back to the product that was already passed in from the catalog.
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final product = widget.product;
+    final product = _product;
     final screenHeight = MediaQuery.sizeOf(context).height;
     final topSectionHeight = screenHeight * 0.52;
+    final imageUrls = product.imageUrls.isNotEmpty
+        ? product.imageUrls
+        : [product.imageUrl];
 
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F8),
@@ -51,7 +111,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           decoration: const BoxDecoration(color: Colors.white),
           child: ElevatedButton.icon(
             onPressed: () => _addSelectedProductToCart(product),
-            style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(54)),
+            style: ElevatedButton.styleFrom(
+              minimumSize: const Size.fromHeight(54),
+            ),
             icon: const Icon(Icons.shopping_bag_outlined),
             label: Text('Add to Cart • ${formatPrice(product.price)}'),
           ),
@@ -75,7 +137,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         const Spacer(),
                         const Text(
                           'Detail Product',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Color(0xFF23263B)),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF23263B),
+                          ),
                         ),
                         const Spacer(),
                         const _CircleAction(icon: Icons.shopping_bag_outlined),
@@ -85,11 +151,40 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     Expanded(
                       child: Hero(
                         tag: 'product-image-${product.id}',
-                        child: AppNetworkImage(
-                          imageUrl: product.imageUrl,
-                          fit: BoxFit.contain,
-                          borderRadius: BorderRadius.circular(24),
-                          placeholderIcon: Icons.shopping_bag_outlined,
+                        child: Stack(
+                          alignment: Alignment.topRight,
+                          children: [
+                            ProductImageGallery(
+                              // The server can return any number of images; this gallery lets the user swipe through all of them horizontally.
+                              imageUrls: imageUrls,
+                              fallbackImageUrl: product.imageUrl,
+                              height: topSectionHeight,
+                              itemWidth: MediaQuery.sizeOf(context).width - 22,
+                              spacing: 14,
+                              borderRadius: BorderRadius.circular(24),
+                              placeholderIcon: Icons.shopping_bag_outlined,
+                            ),
+                            // Small badge to show number of images fetched (helps debug visibility issues).
+                            if (imageUrls.isNotEmpty)
+                              Container(
+                                margin: const EdgeInsets.all(8),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.5),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  '${imageUrls.length} images',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                       ),
                     ),
@@ -115,7 +210,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           Expanded(
                             child: Text(
                               product.name,
-                              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+                              style: Theme.of(context).textTheme.titleLarge
+                                  ?.copyWith(fontWeight: FontWeight.w800),
                             ),
                           ),
                           Container(
@@ -123,7 +219,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                               color: const Color(0xFFF3F4F8),
                               borderRadius: BorderRadius.circular(999),
                             ),
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 5,
+                            ),
                             child: Row(
                               children: [
                                 _QtyButton(
@@ -135,8 +234,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                   },
                                 ),
                                 Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                                  child: Text('$_quantity', style: const TextStyle(fontWeight: FontWeight.w700)),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                  ),
+                                  child: Text(
+                                    '$_quantity',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
                                 ),
                                 _QtyButton(
                                   icon: Icons.add,
@@ -150,18 +256,34 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       const SizedBox(height: 8),
                       Row(
                         children: const [
-                          Icon(Icons.star_rounded, size: 18, color: Color(0xFFF6B60A)),
+                          Icon(
+                            Icons.star_rounded,
+                            size: 18,
+                            color: Color(0xFFF6B60A),
+                          ),
                           SizedBox(width: 4),
-                          Text('4.8', style: TextStyle(fontWeight: FontWeight.w700)),
+                          Text(
+                            '4.8',
+                            style: TextStyle(fontWeight: FontWeight.w700),
+                          ),
                           SizedBox(width: 6),
-                          Text('(320 Review)', style: TextStyle(color: Color(0xFF9AA1B2))),
+                          Text(
+                            '(320 Review)',
+                            style: TextStyle(color: Color(0xFF9AA1B2)),
+                          ),
                           Spacer(),
-                          Text('Available in stok', style: TextStyle(fontWeight: FontWeight.w600)),
+                          Text(
+                            'Available in stok',
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
                         ],
                       ),
                       if (product.availableColors.isNotEmpty) ...[
                         const SizedBox(height: 18),
-                        Text('Color', style: Theme.of(context).textTheme.titleMedium),
+                        Text(
+                          'Color',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
                         const SizedBox(height: 10),
                         Wrap(
                           spacing: 14,
@@ -170,7 +292,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             for (final color in product.availableColors)
                               InkWell(
                                 borderRadius: BorderRadius.circular(999),
-                                onTap: () => setState(() => _selectedColor = color),
+                                onTap: () =>
+                                    setState(() => _selectedColor = color),
                                 child: Stack(
                                   alignment: Alignment.center,
                                   children: [
@@ -183,7 +306,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                       ),
                                     ),
                                     if (_selectedColor == color)
-                                      const Icon(Icons.check_rounded, color: Colors.white),
+                                      const Icon(
+                                        Icons.check_rounded,
+                                        color: Colors.white,
+                                      ),
                                   ],
                                 ),
                               ),
@@ -192,7 +318,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       ],
                       if (product.availableSizes.isNotEmpty) ...[
                         const SizedBox(height: 18),
-                        Text('Size', style: Theme.of(context).textTheme.titleMedium),
+                        Text(
+                          'Size',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
                         const SizedBox(height: 10),
                         Wrap(
                           spacing: 10,
@@ -202,22 +331,32 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                               ChoiceChip(
                                 label: Text(size),
                                 selected: _selectedSize == size,
-                                onSelected: (_) => setState(() => _selectedSize = size),
+                                onSelected: (_) =>
+                                    setState(() => _selectedSize = size),
                               ),
                           ],
                         ),
                       ],
                       const SizedBox(height: 18),
-                      Text('Description', style: Theme.of(context).textTheme.titleMedium),
+                      Text(
+                        'Description',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
                       const SizedBox(height: 8),
                       Text(
                         product.description,
-                        style: const TextStyle(height: 1.6, color: Color(0xFF6E7486)),
+                        style: const TextStyle(
+                          height: 1.6,
+                          color: Color(0xFF6E7486),
+                        ),
                       ),
                       const SizedBox(height: 18),
                       Text(
                         formatPrice(product.price),
-                        style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
+                        style: const TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ],
                   ),
@@ -307,4 +446,3 @@ class _QtyButton extends StatelessWidget {
     );
   }
 }
-

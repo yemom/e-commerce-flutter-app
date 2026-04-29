@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:e_commerce_app_with_django/core/presentation/widgets/app_formatters.dart';
-import 'package:e_commerce_app_with_django/core/presentation/widgets/app_network_image.dart';
+import 'package:e_commerce_app_with_django/core/presentation/widgets/product_image_gallery.dart';
 import 'package:e_commerce_app_with_django/features/products/domain/models/product.dart';
 import 'package:e_commerce_app_with_django/features/products/presentation/providers/product_provider.dart';
 
@@ -32,6 +32,7 @@ class _AdminInventoryScreenState extends ConsumerState<AdminInventoryScreen> {
   }
 
   Future<void> _loadProducts() async {
+    // Super admins can see the full catalog, while branch admins only see the branch-scoped subset.
     final notifier = ref.read(productProvider.notifier);
     if (widget.isSuperAdmin) {
       await notifier.loadAllProducts();
@@ -45,6 +46,7 @@ class _AdminInventoryScreenState extends ConsumerState<AdminInventoryScreen> {
   }
 
   Future<void> _updateProduct(Product product) async {
+    // Keep the inventory edit flow focused on the fields admins change most often.
     final priceController = TextEditingController(
       text: product.price.toStringAsFixed(2),
     );
@@ -62,7 +64,7 @@ class _AdminInventoryScreenState extends ConsumerState<AdminInventoryScreen> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // 🔹 DESCRIPTION FIELD
+              // Keep the description editable inline so the admin can fix copy without leaving the list.
               TextField(
                 controller: descriptionController,
                 maxLines: 3,
@@ -73,7 +75,7 @@ class _AdminInventoryScreenState extends ConsumerState<AdminInventoryScreen> {
 
               const SizedBox(height: 12),
 
-              // 🔹 PRICE FIELD
+              // Price stays in the same dialog because inventory edits usually update text and pricing together.
               TextField(
                 controller: priceController,
                 keyboardType: const TextInputType.numberWithOptions(
@@ -108,10 +110,10 @@ class _AdminInventoryScreenState extends ConsumerState<AdminInventoryScreen> {
       },
     );
 
-    //  user cancelled
+    // Stop here if the dialog was dismissed without saving.
     if (result == null) return;
 
-    // update product
+    // Save the updated values, then reload the list so the visible card matches the stored product.
     await ref
         .read(productRepositoryProvider)
         .updateProduct(
@@ -188,43 +190,52 @@ class _AdminInventoryScreenState extends ConsumerState<AdminInventoryScreen> {
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(color: const Color(0xFFE7ECF3)),
                   ),
-                  child: Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Show a compact horizontally scrollable strip so inventory users can preview multiple product shots.
                       SizedBox(
-                        width: 54,
-                        height: 54,
-                        child: AppNetworkImage(
-                          imageUrl: product.imageUrl,
-                          borderRadius: BorderRadius.circular(12),
+                        height: 76,
+                        child: ProductImageGallery(
+                          imageUrls: product.imageUrls,
+                          fallbackImageUrl: product.imageUrl,
+                          height: 76,
+                          itemWidth: 112,
+                          spacing: 8,
+                          borderRadius: BorderRadius.circular(14),
                           placeholderIcon: Icons.inventory_2_outlined,
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              product.name,
-                              style: Theme.of(context).textTheme.titleSmall,
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  product.name,
+                                  style: Theme.of(context).textTheme.titleSmall,
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  formatPrice(product.price),
+                                  style: const TextStyle(color: Color(0xFF1D4ED8)),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              formatPrice(product.price),
-                              style: const TextStyle(color: Color(0xFF1D4ED8)),
-                            ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        tooltip: 'Update product',
-                        onPressed: () => _updateProduct(product),
-                        icon: const Icon(Icons.edit_outlined),
-                      ),
-                      IconButton(
-                        tooltip: 'Delete product',
-                        onPressed: () => _deleteProduct(product.id),
-                        icon: const Icon(Icons.delete_outline),
+                          ),
+                          IconButton(
+                            tooltip: 'Update product',
+                            onPressed: () => _updateProduct(product),
+                            icon: const Icon(Icons.edit_outlined),
+                          ),
+                          IconButton(
+                            tooltip: 'Delete product',
+                            onPressed: () => _deleteProduct(product.id),
+                            icon: const Icon(Icons.delete_outline),
+                          ),
+                        ],
                       ),
                     ],
                   ),

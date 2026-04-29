@@ -15,6 +15,7 @@ class ProductDto {
     required this.isAvailable,
     this.availableSizes = const [],
     this.availableColors = const [],
+    this.imageUrls = const [],
     this.selectedSize,
     this.selectedColor,
   });
@@ -30,6 +31,7 @@ class ProductDto {
   final bool isAvailable;
   final List<String> availableSizes;
   final List<ProductColorOption> availableColors;
+  final List<String> imageUrls;
   final String? selectedSize;
   final ProductColorOption? selectedColor;
 
@@ -48,6 +50,7 @@ class ProductDto {
       availableColors: (json['availableColors'] as List<dynamic>? ?? const [])
           .map((color) => ProductColorOption.fromJson(color as Map<String, dynamic>))
           .toList(),
+        imageUrls: List<String>.from(json['imageUrls'] as List<dynamic>? ?? const []),
       selectedSize: json['selectedSize'] as String?,
       selectedColor: json['selectedColor'] == null
           ? null
@@ -68,6 +71,7 @@ class ProductDto {
       'isAvailable': isAvailable,
       'availableSizes': availableSizes,
       'availableColors': availableColors.map((color) => color.toJson()).toList(),
+      'imageUrls': imageUrls,
       'selectedSize': selectedSize,
       'selectedColor': selectedColor?.toJson(),
     };
@@ -86,6 +90,7 @@ class ProductDto {
       isAvailable: product.isAvailable,
       availableSizes: product.availableSizes,
       availableColors: product.availableColors,
+      imageUrls: product.imageUrls,
       selectedSize: product.selectedSize,
       selectedColor: product.selectedColor,
     );
@@ -104,6 +109,7 @@ class ProductDto {
       isAvailable: isAvailable,
       availableSizes: availableSizes,
       availableColors: availableColors,
+      imageUrls: imageUrls,
       selectedSize: selectedSize,
       selectedColor: selectedColor,
     );

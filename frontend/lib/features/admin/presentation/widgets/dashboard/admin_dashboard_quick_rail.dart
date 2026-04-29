@@ -35,6 +35,7 @@ class AdminDashboardQuickRail extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Quick actions stay at the top so the highest-frequency admin tasks are always one tap away.
           DashboardDataCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -71,6 +72,7 @@ class AdminDashboardQuickRail extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
+          // These metrics give the admin a fast read on the current size of the operation.
           DashboardDataCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -91,6 +93,7 @@ class AdminDashboardQuickRail extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
+          // The section list mirrors the main dashboard navigation so users can jump back into the right area quickly.
           DashboardDataCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -124,6 +127,7 @@ class AdminDashboardQuickRail extends StatelessWidget {
           ),
           if (canManageAdmins) ...[
             const SizedBox(height: 12),
+            // Super admins see a small pending-access summary so review work does not get buried.
             DashboardDataCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

@@ -79,6 +79,7 @@ class HomeTab extends ConsumerWidget {
           ProductDetailScreen(
             product: product,
             onAddToCart: ref.read(cartProvider.notifier).addProduct,
+            onFetchProduct: (productId) => ref.read(productRepositoryProvider).getProduct(productId),
           ),
         );
       },

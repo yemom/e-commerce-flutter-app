@@ -53,6 +53,7 @@ Product buildProduct({
   bool isAvailable = true,
   List<String>? availableSizes,
   List<ProductColorOption>? availableColors,
+  List<String>? imageUrls,
   String? selectedSize,
   ProductColorOption? selectedColor,
 }) {
@@ -81,6 +82,7 @@ Product buildProduct({
           ProductColorOption(name: 'Cream', hexCode: '#DCC7A1'),
           ProductColorOption(name: 'Midnight', hexCode: '#0F172A'),
         ],
+    imageUrls: imageUrls ?? const [],
     selectedSize: selectedSize,
     selectedColor: selectedColor,
   );

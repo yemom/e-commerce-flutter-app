@@ -1,11 +1,13 @@
 /// Displays the product catalog with search, branch, and category filters.
 library;
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 
 import 'package:e_commerce_app_with_django/core/presentation/widgets/app_formatters.dart';
 import 'package:e_commerce_app_with_django/core/presentation/widgets/app_network_image.dart';
+import 'package:e_commerce_app_with_django/core/presentation/widgets/product_image_gallery.dart';
 import 'package:e_commerce_app_with_django/features/branches/domain/models/branch.dart';
 import 'package:e_commerce_app_with_django/features/categories/domain/models/category.dart';
 import 'package:e_commerce_app_with_django/features/products/domain/models/product.dart';
@@ -125,7 +127,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
   static const List<_BannerItem> _bannerItems = [
     _BannerItem(
       title: '24% off shipping today\non bag purchases',
-      subtitle: 'By Kutuku Store',
+      subtitle: 'By Gulit Store',
     ),
     _BannerItem(
       title: 'Buy 2 bags and get\nfree express delivery',
@@ -140,10 +142,16 @@ class _ProductListScreenState extends State<ProductListScreen> {
   @override
   Widget build(BuildContext context) {
     // Responsive grid and spacing to keep cards readable on all screen widths.
-    final currentBranch = widget.branches.where((branch) => branch.id == widget.selectedBranchId).firstOrNull;
+    final currentBranch = widget.branches
+        .where((branch) => branch.id == widget.selectedBranchId)
+        .firstOrNull;
     final screenWidth = MediaQuery.sizeOf(context).width;
     final horizontalPadding = screenWidth < 380 ? 16.0 : 20.0;
-    final crossAxisCount = screenWidth >= 920 ? 4 : screenWidth >= 640 ? 3 : 2;
+    final crossAxisCount = screenWidth >= 920
+        ? 4
+        : screenWidth >= 640
+        ? 3
+        : 2;
     final mainAxisExtent = screenWidth >= 640 ? 292.0 : 274.0;
     final greetingName = widget.userName.split(' ').first;
 
@@ -151,7 +159,12 @@ class _ProductListScreenState extends State<ProductListScreen> {
       backgroundColor: const Color(0xFFF6F7FB),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: EdgeInsets.fromLTRB(horizontalPadding, 16, horizontalPadding, 120),
+          padding: EdgeInsets.fromLTRB(
+            horizontalPadding,
+            16,
+            horizontalPadding,
+            120,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -166,7 +179,10 @@ class _ProductListScreenState extends State<ProductListScreen> {
                         color: const Color(0xFFECEAF7),
                         borderRadius: BorderRadius.circular(24),
                       ),
-                      child: const Icon(Icons.person_rounded, color: Color(0xFF23263B)),
+                      child: const Icon(
+                        Icons.person_rounded,
+                        color: Color(0xFF23263B),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -175,7 +191,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Hi, $greetingName',
+                          'Selam, $greetingName',
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w800,
@@ -185,14 +201,19 @@ class _ProductListScreenState extends State<ProductListScreen> {
                         const SizedBox(height: 2),
                         Text(
                           currentBranch?.name ?? 'Let\'s go shopping',
-                          style: const TextStyle(color: Color(0xFF9197A8), fontSize: 13),
+                          style: const TextStyle(
+                            color: Color(0xFF9197A8),
+                            fontSize: 13,
+                          ),
                         ),
                       ],
                     ),
                   ),
                   _HeaderIconButton(
                     key: const Key('product-list.search-toggle'),
-                    icon: _showSearchField ? Icons.close_rounded : Icons.search_rounded,
+                    icon: _showSearchField
+                        ? Icons.close_rounded
+                        : Icons.search_rounded,
                     onTap: _toggleSearchField,
                   ),
                   const SizedBox(width: 10),
@@ -205,37 +226,49 @@ class _ProductListScreenState extends State<ProductListScreen> {
               ),
               const SizedBox(height: 20),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 22,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Row(
                   children: [
-                    const Expanded(child: _TopTabChip(label: 'Home', selected: true)),
+                    const Expanded(
+                      child: _TopTabChip(label: 'Home', selected: true),
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: InkWell(
                         borderRadius: BorderRadius.circular(12),
                         onTap: widget.onOpenCategoryScreen,
-                        child: const _TopTabChip(label: 'Category', selected: false),
+                        child: const _TopTabChip(
+                          label: 'Category',
+                          selected: false,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 16),
+              // The promo banner is a lightweight carousel that surfaces offers without interrupting the shopping flow.
               SizedBox(
                 height: 148,
                 child: PageView.builder(
                   controller: _bannerController,
-                  onPageChanged: (index) => setState(() => _activeBannerIndex = index),
+                  onPageChanged: (index) =>
+                      setState(() => _activeBannerIndex = index),
                   itemCount: _bannerItems.length,
                   itemBuilder: (context, index) {
                     final item = _bannerItems[index];
                     final promoImage = widget.products.isEmpty
                         ? ''
-                        : widget.products[index % widget.products.length].imageUrl;
+                        : widget
+                              .products[index % widget.products.length]
+                              .imageUrl;
                     return Container(
                       margin: const EdgeInsets.symmetric(horizontal: 2),
                       padding: const EdgeInsets.all(18),
@@ -264,7 +297,10 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                 const SizedBox(height: 8),
                                 Text(
                                   item.subtitle,
-                                  style: const TextStyle(color: Color(0xFF9197A8), fontSize: 12),
+                                  style: const TextStyle(
+                                    color: Color(0xFF9197A8),
+                                    fontSize: 12,
+                                  ),
                                 ),
                               ],
                             ),
@@ -321,6 +357,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
                   ),
                 ),
               const SizedBox(height: 14),
+              // Keep branch selection close to the catalog so the shopper can switch context without leaving the page.
+              const SizedBox(height: 16),
               DropdownButtonFormField<String?>(
                 key: const Key('product-list.branch-filter'),
                 initialValue: widget.selectedBranchId,
@@ -343,6 +381,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                 ),
               ),
               const SizedBox(height: 16),
+              // Category chips are horizontal so shoppers can scan the catalog quickly without extra scrolling.
               SizedBox(
                 height: 42,
                 child: ListView.separated(
@@ -354,7 +393,9 @@ class _ProductListScreenState extends State<ProductListScreen> {
                         label: const Text('All'),
                         selectedColor: const Color(0xFF7061FF),
                         labelStyle: TextStyle(
-                          color: widget.selectedCategoryId == null ? Colors.white : const Color(0xFF23263B),
+                          color: widget.selectedCategoryId == null
+                              ? Colors.white
+                              : const Color(0xFF23263B),
                           fontWeight: FontWeight.w700,
                         ),
                         backgroundColor: Colors.white,
@@ -369,7 +410,9 @@ class _ProductListScreenState extends State<ProductListScreen> {
                       label: Text(category.name),
                       selectedColor: const Color(0xFF7061FF),
                       labelStyle: TextStyle(
-                        color: category.id == widget.selectedCategoryId ? Colors.white : const Color(0xFF23263B),
+                        color: category.id == widget.selectedCategoryId
+                            ? Colors.white
+                            : const Color(0xFF23263B),
                         fontWeight: FontWeight.w700,
                       ),
                       backgroundColor: Colors.white,
@@ -382,13 +425,20 @@ class _ProductListScreenState extends State<ProductListScreen> {
                 ),
               ),
               const SizedBox(height: 18),
+              // The grid balances image-first product cards with enough metadata for confident browsing.
               Row(
                 children: [
-                  Text('New Arrivals', style: Theme.of(context).textTheme.titleLarge),
+                  Text(
+                    'New Arrivals',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
                   const SizedBox(width: 6),
                   const Text('🔥', style: TextStyle(fontSize: 18)),
                   const Spacer(),
-                  TextButton(onPressed: widget.onSeeAll, child: const Text('See All')),
+                  TextButton(
+                    onPressed: widget.onSeeAll,
+                    child: const Text('See All'),
+                  ),
                 ],
               ),
               const SizedBox(height: 10),
@@ -429,13 +479,21 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                 children: [
                                   Hero(
                                     tag: 'product-image-${product.id}',
-                                    child: SizedBox(
-                                      height: double.infinity,
-                                      width: double.infinity,
-                                      child: AppNetworkImage(
-                                        imageUrl: product.imageUrl,
-                                        borderRadius: BorderRadius.circular(22),
-                                      ),
+                                    child: LayoutBuilder(
+                                      builder: (context, constraints) {
+                                        // Let shoppers swipe through the available product photos right from the catalog card.
+                                        return ProductImageGallery(
+                                          imageUrls: product.imageUrls,
+                                          fallbackImageUrl: product.imageUrl,
+                                          height: constraints.maxHeight,
+                                          itemWidth: constraints.maxWidth,
+                                          borderRadius: BorderRadius.circular(
+                                            22,
+                                          ),
+                                          placeholderIcon:
+                                              Icons.shopping_bag_outlined,
+                                        );
+                                      },
                                     ),
                                   ),
                                   Positioned(
@@ -445,7 +503,9 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                       width: 34,
                                       height: 34,
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withValues(alpha: 0.92),
+                                        color: Colors.white.withValues(
+                                          alpha: 0.92,
+                                        ),
                                         borderRadius: BorderRadius.circular(17),
                                       ),
                                       child: const Icon(
@@ -470,7 +530,10 @@ class _ProductListScreenState extends State<ProductListScreen> {
                               product.description,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 13, color: Color(0xFF9197A8)),
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF9197A8),
+                              ),
                             ),
                             const SizedBox(height: 8),
                             Row(

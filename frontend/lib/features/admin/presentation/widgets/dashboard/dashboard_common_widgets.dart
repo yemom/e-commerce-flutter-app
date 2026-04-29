@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+/// Shared card shell used by the admin dashboard so every summary panel keeps the same spacing, border, and elevation.
 class DashboardDataCard extends StatelessWidget {
   const DashboardDataCard({super.key, required this.child});
 
@@ -26,6 +27,7 @@ class DashboardDataCard extends StatelessWidget {
   }
 }
 
+/// Small helper used for empty-state copy inside admin summary cards.
 class DashboardEmptyHint extends StatelessWidget {
   const DashboardEmptyHint({super.key, required this.text});
 
@@ -40,6 +42,7 @@ class DashboardEmptyHint extends StatelessWidget {
   }
 }
 
+/// Two-line metric row used when a summary card needs a label and a numeric value.
 class DashboardMiniMetric extends StatelessWidget {
   const DashboardMiniMetric({
     super.key,
@@ -72,6 +75,7 @@ class DashboardMiniMetric extends StatelessWidget {
   }
 }
 
+/// Compact stat label used inside side rails and narrow dashboard cards.
 class DashboardTinyStat extends StatelessWidget {
   const DashboardTinyStat({
     super.key,
@@ -98,6 +102,7 @@ class DashboardTinyStat extends StatelessWidget {
   }
 }
 
+/// Row used to explain how a percentage breakdown maps to a color category or status bucket.
 class DashboardBreakdownRow extends StatelessWidget {
   const DashboardBreakdownRow({
     super.key,
@@ -134,6 +139,7 @@ class DashboardBreakdownRow extends StatelessWidget {
   }
 }
 
+/// Full-width action button used in the dashboard side rail.
 class DashboardSideActionButton extends StatelessWidget {
   const DashboardSideActionButton({
     super.key,

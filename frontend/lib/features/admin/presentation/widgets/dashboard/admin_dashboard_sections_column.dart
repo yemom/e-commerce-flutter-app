@@ -47,6 +47,7 @@ class AdminDashboardSectionsColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Keep the section summaries lightweight so the dashboard reads like a status board, not a second admin page.
     final pendingPayments = orders
         .where((order) => order.payment.status == PaymentStatus.pending)
         .length;
@@ -152,6 +153,7 @@ class DashboardSectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // The open button is optional so the same card can be used for both navigable and informational sections.
     return DashboardDataCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

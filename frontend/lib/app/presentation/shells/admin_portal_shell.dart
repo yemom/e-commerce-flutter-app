@@ -219,23 +219,35 @@ class AdminPortalShell extends ConsumerWidget {
   }
 
   Future<void> _openAddProduct(
-    WidgetRef ref, {
-    required List<Category> categories,
-    required List<Branch> branches,
-  }) async {
-    final navigation = ref.read(appNavigationServiceProvider);
-    final adminService = ref.read(adminPortalServiceProvider);
+  WidgetRef ref, {
+  required List<Category> categories,
+  required List<Branch> branches,
+}) async {
+  final navigation = ref.read(appNavigationServiceProvider);
+  final adminService = ref.read(adminPortalServiceProvider);
 
-    await navigation.push(
-      AddProductScreen(
-        categories: categories,
-        branches: branches,
-        onUploadImage: adminService.uploadProductImage,
-        onSubmit: (product) async {
-          await adminService.addProduct(product);
-          navigation.pop();
-        },
-      ),
-    );
-  }
+  await navigation.push(
+    AddProductScreen(
+      categories: categories,
+      branches: branches,
+
+      /// ✅ FIXED WRAPPER
+      onUploadImage: ({
+        required List<int> bytes,
+        required String fileName,
+      }) async {
+        return await adminService.uploadProductImage(
+          bytes: bytes,
+          fileName: fileName,
+        );
+      },
+
+      /// ✅ SUBMIT PRODUCT
+      onSubmit: (product) async {
+        await adminService.addProduct(product);
+        navigation.pop();
+      },
+    ),
+  );
+}
 }

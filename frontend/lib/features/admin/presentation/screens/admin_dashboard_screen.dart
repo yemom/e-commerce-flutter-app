@@ -137,6 +137,7 @@ class AdminDashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // The top-level dashboard shell stays thin and delegates the actual content rendering to the reusable body widgets below.
     final pendingPayments = orders
         .where((order) => order.payment.status == PaymentStatus.pending)
         .length;
@@ -145,6 +146,7 @@ class AdminDashboardScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(dashboardTitle),
         actions: [
+          // Fast actions stay in the app bar because they are the most frequent admin entry points.
           IconButton(
             tooltip: 'Add product',
             onPressed: onAddProduct,
@@ -170,6 +172,7 @@ class AdminDashboardScreen extends StatelessWidget {
         ],
       ),
       body: AdminDashboardBody(
+        // The body receives data and callbacks only, which keeps this screen easy to test and reuse.
         dashboardTitle: dashboardTitle,
         roleSections: roleSections,
         showBranchesSection: showBranchesSection,

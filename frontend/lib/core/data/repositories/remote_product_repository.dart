@@ -12,6 +12,12 @@ class RemoteProductRepository implements ProductRepository {
   final CommerceApiDataSource _dataSource;
 
   @override
+  Future<Product> getProduct(String productId) async {
+    final payload = await _dataSource.getItem('/products/$productId');
+    return ProductDto.fromJson(payload).toDomain();
+  }
+
+  @override
   Future<Product> addProduct(Product product) async {
     // Convert domain model to DTO payload before sending over HTTP.
     final payload = await _dataSource.postItem(
@@ -55,7 +61,7 @@ class RemoteProductRepository implements ProductRepository {
     );
     return payload
         .map(ProductDto.fromJson)
-      // Map transport DTOs back into domain models used by UI/business logic.
+        // Map transport DTOs back into domain models used by UI/business logic.
         .map((dto) => dto.toDomain())
         .toList();
   }

@@ -72,5 +72,19 @@ void main() {
       expect(recreated.branchIds, hasLength(3));
       expect(recreated.stockByBranch['branch-adama-central'], 4);
     });
+
+    test('preserves imageUrls during json round trip', () {
+      final product = buildProduct(
+        imageUrls: const [
+          'https://example.com/products/coffee-1.png',
+          'https://example.com/products/coffee-2.png',
+        ],
+      );
+
+      final recreated = Product.fromJson(product.toJson());
+
+      expect(recreated.imageUrls, hasLength(2));
+      expect(recreated.imageUrls, equals(product.imageUrls));
+    });
   });
 }

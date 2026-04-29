@@ -18,6 +18,13 @@ class AssetProductRepository implements ProductRepository {
   }
 
   @override
+  Future<Product> getProduct(String productId) async {
+    final list = await _products();
+    final dto = list.firstWhere((item) => item.id == productId);
+    return dto.toDomain();
+  }
+
+  @override
   Future<Product> addProduct(Product product) async {
     final list = await _products();
     final dto = ProductDto.fromDomain(product);
@@ -98,6 +105,7 @@ extension on ProductDto {
     bool? isAvailable,
     List<String>? availableSizes,
     List<ProductColorOption>? availableColors,
+    List<String>? imageUrls,
     String? selectedSize,
     ProductColorOption? selectedColor,
   }) {
@@ -113,6 +121,7 @@ extension on ProductDto {
       isAvailable: isAvailable ?? this.isAvailable,
       availableSizes: availableSizes ?? this.availableSizes,
       availableColors: availableColors ?? this.availableColors,
+      imageUrls: imageUrls ?? this.imageUrls,
       selectedSize: selectedSize ?? this.selectedSize,
       selectedColor: selectedColor ?? this.selectedColor,
     );

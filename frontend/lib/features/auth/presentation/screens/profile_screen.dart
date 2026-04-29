@@ -447,7 +447,7 @@ class _HelpSupportScreen extends StatelessWidget {
           ListTile(
             leading: Icon(Icons.mail_outline_rounded),
             title: Text('Email Support'),
-            subtitle: Text('support@kutuku.app'),
+            subtitle: Text('support@gulit.app'),
           ),
           ListTile(
             leading: Icon(Icons.phone_in_talk_outlined),
