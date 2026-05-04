@@ -160,30 +160,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                               fallbackImageUrl: product.imageUrl,
                               height: topSectionHeight,
                               itemWidth: MediaQuery.sizeOf(context).width - 22,
-                              spacing: 14,
+                              spacing: 30,
                               borderRadius: BorderRadius.circular(24),
                               placeholderIcon: Icons.shopping_bag_outlined,
                             ),
-                            // Small badge to show number of images fetched (helps debug visibility issues).
-                            if (imageUrls.isNotEmpty)
-                              Container(
-                                margin: const EdgeInsets.all(8),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.5),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  '${imageUrls.length} images',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
                           ],
                         ),
                       ),

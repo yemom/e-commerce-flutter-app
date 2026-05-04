@@ -32,6 +32,13 @@ void main() {
         ),
       );
 
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('Black Tea'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+
       expect(find.text('Arabica Coffee'), findsOneWidget);
       expect(find.text('Black Tea'), findsOneWidget);
       expect(find.text('ETB 550.00'), findsOneWidget);
@@ -62,14 +69,17 @@ void main() {
         ),
       );
 
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(const Key('cart.increment.prod-coffee-1')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('cart.increment.prod-coffee-1')));
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(updatedProductId, 'prod-coffee-1');
       expect(updatedQuantity, 2);
 
       await tester.tap(find.byKey(const Key('cart.remove.prod-coffee-1')));
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(removedProductId, 'prod-coffee-1');
     });

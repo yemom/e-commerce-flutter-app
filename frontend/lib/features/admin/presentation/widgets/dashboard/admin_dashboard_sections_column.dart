@@ -22,6 +22,7 @@ class AdminDashboardSectionsColumn extends StatelessWidget {
     required this.superAdmins,
     required this.pendingRequests,
     required this.onOpenBranchesPage,
+    this.onOpenDriversPage,
     required this.onOpenCategoriesPage,
     required this.onOpenAdminRequestsPage,
     required this.onOpenPaymentOptionsPage,
@@ -39,6 +40,7 @@ class AdminDashboardSectionsColumn extends StatelessWidget {
   final List<AdminAccount> superAdmins;
   final List<AdminAccount> pendingRequests;
   final VoidCallback? onOpenBranchesPage;
+  final VoidCallback? onOpenDriversPage;
   final VoidCallback? onOpenCategoriesPage;
   final VoidCallback? onOpenAdminRequestsPage;
   final VoidCallback? onOpenPaymentOptionsPage;
@@ -95,6 +97,14 @@ class AdminDashboardSectionsColumn extends StatelessWidget {
               : '${adminPaymentOptions.where((item) => item.isEnabled).length} enabled payment option(s).',
           actionLabel: 'Open Payment Options',
           actionIcon: Icons.payments_outlined,
+        ),
+        const SizedBox(height: 14),
+        DashboardSectionCard(
+          title: 'Drivers',
+          onOpenPage: onOpenDriversPage,
+          summary: 'Manage drivers and their assignments.',
+          actionLabel: 'Open Drivers Page',
+          actionIcon: Icons.delivery_dining_outlined,
         ),
         const SizedBox(height: 14),
         DashboardSectionCard(

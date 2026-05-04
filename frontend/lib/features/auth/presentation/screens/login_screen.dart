@@ -13,7 +13,7 @@ class LoginScreen extends StatefulWidget {
     this.error,
   });
 
-  final Future<void> Function({
+  final Future<dynamic> Function({
     required String identifier,
     required String password,
   })

@@ -1,19 +1,12 @@
-import 'package:e_commerce_app_with_django/features/admin/presentation/services/api_client.dart';
-import 'package:http/src/response.dart';
+import 'package:e_commerce_app_with_django/driver_app/services/api_service.dart';
 
-
-//display the current admin name in the hero card title if available, otherwise default to "Admin".
 class AdminApiService {
-  final ApiClient api;
-
   AdminApiService(this.api);
 
-  Future<String> fetchAdminName() async {
-    final response = await api.get('/admin/profile');
-    return response.data['name'];
-  }
-}
+  final ApiService api;
 
-extension on Response {
-  get data => null;
+  Future<String> fetchAdminName() async {
+    final profile = await api.fetchAdminProfile();
+    return profile['name'] as String? ?? 'Admin';
+  }
 }

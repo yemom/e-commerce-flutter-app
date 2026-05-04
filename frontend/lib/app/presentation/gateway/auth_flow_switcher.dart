@@ -32,11 +32,17 @@ class AuthFlowSwitcher extends ConsumerWidget {
                 required fullName,
                 required identifier,
                 required password,
+                required registerAsDriver,
+                vehicleType,
+                licenseNumber,
               }) async {
                 await authNotifier.signUp(
                   fullName: fullName,
-                  email: identifier,
+                  identifier: identifier,
                   password: password,
+                  registerAsDriver: registerAsDriver,
+                  vehicleType: vehicleType,
+                  licenseNumber: licenseNumber,
                 );
               },
         );

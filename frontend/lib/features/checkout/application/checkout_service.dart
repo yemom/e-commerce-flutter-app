@@ -36,12 +36,18 @@ class CheckoutService {
     required PaymentMethod selectedMethod,
     required String branchId,
     required String customerId,
+    required String customerName,
+    required String customerEmail,
+    required String deliveryAddress,
   }) {
     return _orderPreviewService.buildPreviewOrder(
       cartState: cartState,
       selectedMethod: selectedMethod,
       branchId: branchId,
       customerId: customerId,
+      customerName: customerName,
+      customerEmail: customerEmail,
+      deliveryAddress: deliveryAddress,
     );
   }
 
@@ -50,6 +56,8 @@ class CheckoutService {
     required PaymentMethod selectedMethod,
     required String branchId,
     required String customerId,
+    required String customerName,
+    required String deliveryAddress,
     String? customerEmail,
   }) async {
     final previewOrder = buildPreviewOrder(
@@ -57,6 +65,9 @@ class CheckoutService {
       selectedMethod: selectedMethod,
       branchId: branchId,
       customerId: customerId,
+      customerName: customerName,
+      customerEmail: customerEmail ?? '',
+      deliveryAddress: deliveryAddress,
     );
 
     final paymentResult = await _paymentService.processPayment(

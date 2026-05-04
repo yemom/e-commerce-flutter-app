@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'package:e_commerce_app_with_django/app/presentation/shells/admin_portal_shell.dart';
 import 'package:e_commerce_app_with_django/app/presentation/shells/app_shell.dart';
+import 'package:e_commerce_app_with_django/driver_app/driver_app_shell.dart';
 import 'package:e_commerce_app_with_django/features/auth/domain/models/auth_session.dart';
 import 'package:e_commerce_app_with_django/features/auth/domain/models/user_role.dart';
 
@@ -17,6 +18,10 @@ class RoleGate extends StatelessWidget {
     if (session.role == AppUserRole.admin ||
         session.role == AppUserRole.superAdmin) {
       return const AdminPortalShell();
+    }
+
+    if (session.role == AppUserRole.driver) {
+      return const DriverAppShell();
     }
 
     return const AppShell();

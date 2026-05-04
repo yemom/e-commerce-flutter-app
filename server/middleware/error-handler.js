@@ -3,6 +3,11 @@ const { MissingFieldError } = require('../utils/errors');
 
 function createErrorHandler() {
   return (error, req, res, next) => {
+    // Invalid JSON payloads from clients should be treated as bad requests.
+    if (error?.type === 'entity.parse.failed' || (error instanceof SyntaxError && error?.status === 400)) {
+      return res.status(400).json({ message: 'Invalid JSON body. Remove request body for GET calls, or send valid JSON.' });
+    }
+
     // Validation-style errors should return actionable 4xx responses.
     if (error instanceof MissingFieldError) {
       return res.status(400).json({ message: error.message });

@@ -136,34 +136,22 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> login({required String identifier, required String password}) async {
-    final email = _normalizedEmail(identifier);
+    final trimmedIdentifier = identifier.trim();
     final trimmedPassword = password.trim();
 
     // Keep client-side validation simple and fast before touching the network.
-    if (email.isEmpty || trimmedPassword.isEmpty) {
+    if (trimmedIdentifier.isEmpty || trimmedPassword.isEmpty) {
       state = const AuthState(
         status: AuthStatus.unauthenticated,
-        error: 'Email and password are required.',
-      );
-      return;
-    }
-
-    if (!email.contains('@')) {
-      state = const AuthState(
-        status: AuthStatus.unauthenticated,
-        error: 'Enter a valid email address.',
+        error: 'Email or phone and password are required.',
       );
       return;
     }
 
     try {
-      // Server returns session payload and token on success.
-      final payload = await _api.postItem(
-        '/auth/login',
-        body: <String, dynamic>{
-          'email': email,
-          'password': trimmedPassword,
-        },
+      final payload = await _loginAcrossRoles(
+        identifier: trimmedIdentifier,
+        password: trimmedPassword,
       );
       final session = _sessionFromApi(payload: payload);
       await _prefs.saveAuth(token: session.token, userName: session.userName);
@@ -177,6 +165,35 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  Future<Map<String, dynamic>> _loginAcrossRoles({
+    required String identifier,
+    required String password,
+  }) async {
+    final paths = <String>['/auth/user', '/auth/admin', '/auth/driver', '/auth/login'];
+    CommerceApiException? lastApiError;
+
+    for (final path in paths) {
+      try {
+        return await _api.postItem(
+          path,
+          body: <String, dynamic>{
+            'identifier': identifier,
+            'password': password,
+          },
+        );
+      } on CommerceApiException catch (error) {
+        lastApiError = error;
+        final status = error.statusCode ?? 0;
+        if (status != 401 && status != 403 && status != 404) {
+          rethrow;
+        }
+      }
+    }
+
+    throw lastApiError ??
+        const CommerceApiException('We could not sign you in right now. Please try again.');
+  }
+
   Future<void> logout() async {
     await _prefs.clearAuth();
     state = const AuthState(status: AuthStatus.unauthenticated);
@@ -184,26 +201,21 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> signUp({
     required String fullName,
-    required String email,
+    required String identifier,
     required String password,
+    bool registerAsDriver = false,
+    String? vehicleType,
+    String? licenseNumber,
   }) async {
-    final normalizedEmail = _normalizedEmail(email);
+    final trimmedIdentifier = identifier.trim();
     final trimmedName = fullName.trim();
     final trimmedPassword = password.trim();
 
     // Mirror login validation style so auth UX is predictable.
-    if (normalizedEmail.isEmpty || trimmedPassword.isEmpty) {
+    if (trimmedIdentifier.isEmpty || trimmedPassword.isEmpty) {
       state = const AuthState(
         status: AuthStatus.unauthenticated,
-        error: 'Email and password are required.',
-      );
-      return;
-    }
-
-    if (!normalizedEmail.contains('@')) {
-      state = const AuthState(
-        status: AuthStatus.unauthenticated,
-        error: 'Enter a valid email address.',
+        error: 'Email or phone and password are required.',
       );
       return;
     }
@@ -216,13 +228,26 @@ class AuthNotifier extends StateNotifier<AuthState> {
       return;
     }
 
+    if (registerAsDriver) {
+      if ((vehicleType ?? '').trim().isEmpty || (licenseNumber ?? '').trim().isEmpty) {
+        state = const AuthState(
+          status: AuthStatus.unauthenticated,
+          error: 'Vehicle type and license number are required for driver registration.',
+        );
+        return;
+      }
+    }
+
     try {
       final payload = await _api.postItem(
-        '/auth/signup',
+        '/auth/register',
         body: <String, dynamic>{
           'fullName': trimmedName,
-          'email': normalizedEmail,
+          'identifier': trimmedIdentifier,
           'password': trimmedPassword,
+          'registerAsDriver': registerAsDriver,
+          if (registerAsDriver) 'vehicleType': (vehicleType ?? '').trim(),
+          if (registerAsDriver) 'licenseNumber': (licenseNumber ?? '').trim(),
         },
       );
       final session = _sessionFromApi(payload: payload);

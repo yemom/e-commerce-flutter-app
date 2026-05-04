@@ -2,6 +2,7 @@
 enum AppUserRole {
   superAdmin,
   admin,
+  driver,
   user,
 }
 
@@ -13,7 +14,10 @@ extension AppUserRoleX on AppUserRole {
         return 'super_admin';
       case AppUserRole.admin:
         return 'admin';
+      case AppUserRole.driver:
+        return 'driver';
       case AppUserRole.user:
+      default:
         return 'user';
     }
   }
@@ -29,6 +33,8 @@ extension AppUserRoleX on AppUserRole {
         return AppUserRole.superAdmin;
       case 'admin':
         return AppUserRole.admin;
+      case 'driver':
+        return AppUserRole.driver;
       case 'user':
       default:
         return AppUserRole.user;

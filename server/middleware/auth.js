@@ -1,7 +1,7 @@
 // Verifies auth tokens and protects routes that need signed-in or admin users.
 const jwt = require('jsonwebtoken');
 const { jwtSecret } = require('../config/env');
-const { User } = require('../models');
+const { User, Driver } = require('../models');
 
 function parseBearerToken(headerValue) {
   if (!headerValue || typeof headerValue !== 'string') {
@@ -29,16 +29,74 @@ function createAuthMiddleware() {
       const payload = jwt.verify(token, jwtSecret);
       // Token subject maps to application-level user id.
       const user = await User.findOne({ id: payload.sub });
+      if (user) {
+        req.auth = {
+          token,
+          user,
+        };
+        return next();
+      }
 
-      if (!user) {
+      const driver = await Driver.findOne({ id: payload.sub });
+      if (!driver) {
         return res.status(401).json({ message: 'Authentication token is no longer valid.' });
       }
 
       req.auth = {
         token,
-        user,
+        user: {
+          id: driver.id,
+          email: driver.email || '',
+          name: driver.name,
+          role: 'driver',
+          approved: true,
+        },
       };
       // Downstream routes can trust req.auth.user.
+      return next();
+    } catch (_) {
+      return res.status(401).json({ message: 'Authentication token is invalid or expired.' });
+    }
+  };
+}
+
+function createDriverAuthMiddleware() {
+  return async (req, res, next) => {
+    const token = parseBearerToken(req.headers.authorization);
+    if (!token) {
+      return res.status(401).json({ message: 'Authentication token is required.' });
+    }
+
+    try {
+      const payload = jwt.verify(token, jwtSecret);
+      const user = await User.findOne({ id: payload.sub, role: 'driver' });
+      if (user) {
+        req.authDriver = {
+          token,
+          driver: {
+            id: user.id,
+            name: user.name,
+            phone: user.phone || '',
+            email: user.email || '',
+            vehicleType: user.vehicleType || '',
+            licenseNumber: user.licenseNumber || '',
+            isOnline: true,
+            role: 'driver',
+          },
+        };
+        return next();
+      }
+
+      const driver = await Driver.findOne({ id: payload.sub });
+
+      if (!driver) {
+        return res.status(401).json({ message: 'Authentication token is no longer valid.' });
+      }
+
+      req.authDriver = {
+        token,
+        driver,
+      };
       return next();
     } catch (_) {
       return res.status(401).json({ message: 'Authentication token is invalid or expired.' });
@@ -58,4 +116,5 @@ function requireSuperAdmin(req, res, next) {
 module.exports = {
   createAuthMiddleware,
   requireSuperAdmin,
+  createDriverAuthMiddleware,
 };

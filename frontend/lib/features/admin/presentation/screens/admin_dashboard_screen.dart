@@ -50,6 +50,7 @@ class AdminDashboardScreen extends StatelessWidget {
     this.onDeleteBranch,
     this.onOpenOrdersPage,
     this.onOpenInventoryPage,
+    this.onOpenDriversPage,
     this.onOpenBranchesPage,
     this.onOpenCategoriesPage,
     this.onOpenAdminRequestsPage,
@@ -130,6 +131,7 @@ class AdminDashboardScreen extends StatelessWidget {
   final Future<void> Function(String branchId)? onDeleteBranch;
   final VoidCallback? onOpenOrdersPage;
   final VoidCallback? onOpenInventoryPage;
+  final VoidCallback? onOpenDriversPage;
   final VoidCallback? onOpenBranchesPage;
   final VoidCallback? onOpenCategoriesPage;
   final VoidCallback? onOpenAdminRequestsPage;
@@ -164,6 +166,11 @@ class AdminDashboardScreen extends StatelessWidget {
             icon: const Icon(Icons.inventory_2_outlined),
           ),
           IconButton(
+            tooltip: 'Open drivers',
+            onPressed: onOpenDriversPage,
+            icon: const Icon(Icons.local_shipping_outlined),
+          ),
+          IconButton(
             tooltip: 'Log out',
             onPressed: () => onLogout(),
             icon: const Icon(Icons.logout_rounded),
@@ -186,6 +193,7 @@ class AdminDashboardScreen extends StatelessWidget {
         onOpenOrdersPage: onOpenOrdersPage,
         onOpenInventoryPage: onOpenInventoryPage,
         onOpenBranchesPage: onOpenBranchesPage,
+        onOpenDriversPage: onOpenDriversPage,
         onOpenCategoriesPage: onOpenCategoriesPage,
         onOpenAdminRequestsPage: onOpenAdminRequestsPage,
         onOpenPaymentOptionsPage: onOpenPaymentOptionsPage,

@@ -1,5 +1,6 @@
 /// Collects new user details and starts account creation.
 library;
+
 import 'package:flutter/material.dart';
 
 /// Screen for Create Account.
@@ -15,7 +16,11 @@ class CreateAccountScreen extends StatefulWidget {
     required String fullName,
     required String identifier,
     required String password,
-  }) onCreateAccount;
+    required bool registerAsDriver,
+    String? vehicleType,
+    String? licenseNumber,
+  })
+  onCreateAccount;
   final VoidCallback onBackToLogin;
   final String? error;
 
@@ -31,12 +36,18 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   // Disables submit button while account creation is running.
   bool _isSubmitting = false;
   bool _obscurePassword = true;
+  bool _registerAsDriver = false;
+  final _vehicleTypeController = TextEditingController();
+  final _licenseNumberController = TextEditingController();
+  final _phoneNumberController = TextEditingController();
 
   @override
   void dispose() {
     _nameController.dispose();
     _identifierController.dispose();
     _passwordController.dispose();
+    _vehicleTypeController.dispose();
+    _licenseNumberController.dispose();
     super.dispose();
   }
 
@@ -50,7 +61,9 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
             Container(
               height: 220,
               decoration: const BoxDecoration(
-                gradient: LinearGradient(colors: [Color(0xFF5E56E7), Color(0xFF756DF2)]),
+                gradient: LinearGradient(
+                  colors: [Color(0xFF5E56E7), Color(0xFF756DF2)],
+                ),
               ),
             ),
             // Main form in a scroll view for better small-screen behavior.
@@ -61,14 +74,21 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                   children: [
                     IconButton(
                       onPressed: widget.onBackToLogin,
-                      icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+                      icon: const Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        color: Colors.white,
+                      ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
                 const Text(
                   'Create Account',
-                  style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w800),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 32,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 const Text(
@@ -95,7 +115,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                       TextField(
                         controller: _identifierController,
                         decoration: const InputDecoration(
-                          hintText: 'Email address',
+                          hintText: 'Email or phone number',
                           prefixIcon: Icon(Icons.mail_outline_rounded),
                         ),
                       ),
@@ -107,21 +127,68 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                           hintText: 'Password',
                           prefixIcon: const Icon(Icons.lock_outline_rounded),
                           suffixIcon: IconButton(
-                            tooltip: _obscurePassword ? 'Show password' : 'Hide password',
+                            tooltip: _obscurePassword
+                                ? 'Show password'
+                                : 'Hide password',
                             onPressed: () {
-                              setState(() => _obscurePassword = !_obscurePassword);
+                              setState(
+                                () => _obscurePassword = !_obscurePassword,
+                              );
                             },
                             icon: Icon(
-                              _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                              _obscurePassword
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
                             ),
                           ),
                         ),
                       ),
+                      const SizedBox(height: 10),
+                      CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        value: _registerAsDriver,
+                        onChanged: (value) {
+                          setState(() => _registerAsDriver = value ?? false);
+                        },
+                        title: const Text('Register as Driver'),
+                        subtitle: const Text(
+                          'Enable this if you want delivery-driver access.',
+                        ),
+                      ),
+                      if (_registerAsDriver) ...[
+                        TextField(
+                          controller: _phoneNumberController,
+                          decoration: const InputDecoration(
+                            hintText: 'Phone number',
+                            prefixIcon: Icon(Icons.phone_outlined),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        const SizedBox(height: 10),
+                        TextField(
+                          controller: _vehicleTypeController,
+                          decoration: const InputDecoration(
+                            hintText: 'Vehicle type',
+                            prefixIcon: Icon(Icons.delivery_dining_outlined),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        TextField(
+                          controller: _licenseNumberController,
+                          decoration: const InputDecoration(
+                            hintText: 'License number',
+                            prefixIcon: Icon(Icons.badge_outlined),
+                          ),
+                        ),
+                      ],
                       if (widget.error != null)
                         // Friendly error message from auth provider.
                         Padding(
                           padding: const EdgeInsets.only(top: 14),
-                          child: Text(widget.error!, style: const TextStyle(color: Colors.red)),
+                          child: Text(
+                            widget.error!,
+                            style: const TextStyle(color: Colors.red),
+                          ),
                         ),
                       const SizedBox(height: 20),
                       ElevatedButton(
@@ -134,13 +201,22 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                   fullName: _nameController.text,
                                   identifier: _identifierController.text,
                                   password: _passwordController.text,
+                                  registerAsDriver: _registerAsDriver,
+                                  vehicleType: _registerAsDriver
+                                      ? _vehicleTypeController.text
+                                      : null,
+                                  licenseNumber: _registerAsDriver
+                                      ? _licenseNumberController.text
+                                      : null,
                                 );
                                 if (mounted) {
                                   // Re-enable button after response returns.
                                   setState(() => _isSubmitting = false);
                                 }
                               },
-                        child: Text(_isSubmitting ? 'Creating...' : 'Create Account'),
+                        child: Text(
+                          _isSubmitting ? 'Creating...' : 'Create Account',
+                        ),
                       ),
                     ],
                   ),

@@ -57,6 +57,9 @@ class CartTab extends ConsumerWidget {
           selectedMethod: paymentState.selectedMethod,
           branchId: branchState.selectedBranchId ?? '',
           customerId: session.userId,
+          customerName: session.userName,
+          customerEmail: session.email,
+          deliveryAddress: address,
         );
 
         await navigation.push(
@@ -75,7 +78,9 @@ class CartTab extends ConsumerWidget {
                   selectedMethod: ref.read(paymentProvider).selectedMethod,
                   branchId: ref.read(branchProvider).selectedBranchId ?? '',
                   customerId: session.userId,
+                  customerName: session.userName,
                   customerEmail: session.email,
+                  deliveryAddress: address,
                 );
 
                 if (confirmed == null) {

@@ -2,7 +2,7 @@
 library;
 
 import 'dart:convert';
-import 'dart:io' show Platform;
+import 'dart:io' show Platform, SocketException;
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -208,30 +208,47 @@ class CommerceApiDataSource {
       requestHeaders['Content-Type'] = 'application/json';
     }
 
-    switch (method) {
-      case 'GET':
-        return _client.get(uri, headers: requestHeaders);
-      case 'POST':
-        return _client.post(
-          uri,
-          headers: requestHeaders,
-          body: jsonEncode(body ?? const <String, dynamic>{}),
-        );
-      case 'PATCH':
-        return _client.patch(
-          uri,
-          headers: requestHeaders,
-          body: jsonEncode(body ?? const <String, dynamic>{}),
-        );
-      case 'DELETE':
-        return _client.delete(uri, headers: requestHeaders);
+    // Perform the request and provide a fallback for common emulator networking issues.
+    Future<http.Response> doRequest(Uri requestUri) {
+      switch (method) {
+        case 'GET':
+          return _client.get(requestUri, headers: requestHeaders);
+        case 'POST':
+          return _client.post(
+            requestUri,
+            headers: requestHeaders,
+            body: jsonEncode(body ?? const <String, dynamic>{}),
+          );
+        case 'PATCH':
+          return _client.patch(
+            requestUri,
+            headers: requestHeaders,
+            body: jsonEncode(body ?? const <String, dynamic>{}),
+          );
+        case 'DELETE':
+          return _client.delete(requestUri, headers: requestHeaders);
+      }
+      throw UnsupportedError('Unsupported HTTP method: $method');
     }
 
-    throw UnsupportedError('Unsupported HTTP method: $method');
+    return doRequest(uri).catchError((error) async {
+      // If the emulator couldn't connect to 10.0.2.2, try localhost as a fallback (helpful on some Windows setups/emulators).
+      if (error is SocketException && uri.host == '10.0.2.2') {
+        try {
+          final fallback = uri.replace(host: 'localhost');
+          return await doRequest(fallback);
+        } catch (_) {
+          // fall through and rethrow original error below
+        }
+      }
+      // Rethrow the original error to the caller.
+      throw error;
+    });
   }
 
   Uri _buildUri(String path, Map<String, String?> queryParameters) {
-    final normalizedPath = path.startsWith('/') ? path : '/$path';
+    // Ensure exactly one leading slash and remove duplicate slashes.
+    final normalizedPath = '/${path.replaceFirst(RegExp(r'^/+'), '')}';
     final baseUri = Uri.parse(_baseUrl);
     // Remove null/empty query params so generated URLs stay clean.
     final cleanQuery = <String, String>{
@@ -247,16 +264,15 @@ class CommerceApiDataSource {
   }
 
   String _joinPaths(String left, String right) {
-    final normalizedLeft = left.endsWith('/')
-        ? left.substring(0, left.length - 1)
-        : left;
-    final normalizedRight = right.startsWith('/') ? right.substring(1) : right;
+    // Collapse duplicate slashes and join paths safely.
+    final normalizedLeft = left.replaceFirst(RegExp(r'/+\$'), '').replaceAll(RegExp(r'/+'), '/');
+    final normalizedRight = right.replaceFirst(RegExp(r'^/+'), '');
 
     if (normalizedLeft.isEmpty) {
       return '/$normalizedRight';
     }
 
-    return '$normalizedLeft/$normalizedRight';
+    return '${normalizedLeft.endsWith('/') ? normalizedLeft.substring(0, normalizedLeft.length - 1) : normalizedLeft}/$normalizedRight';
   }
 
   dynamic _decodeResponse(http.Response response) {

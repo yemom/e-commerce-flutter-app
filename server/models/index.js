@@ -6,6 +6,7 @@ const PaymentOption = require('./payment-option');
 const PaymentRecord = require('./payment-record');
 const Order = require('./order');
 const User = require('./user');
+const Driver = require('./driver');
 
 module.exports = {
   Branch,
@@ -15,5 +16,6 @@ module.exports = {
   PaymentRecord,
   Order,
   User,
+  Driver,
 };
 

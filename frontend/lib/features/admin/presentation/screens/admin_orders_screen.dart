@@ -11,6 +11,8 @@ import 'package:e_commerce_app_with_django/features/branches/presentation/provid
 import 'package:e_commerce_app_with_django/features/orders/domain/models/order.dart';
 import 'package:e_commerce_app_with_django/features/orders/presentation/providers/order_provider.dart';
 import 'package:e_commerce_app_with_django/features/payment/domain/models/payment.dart';
+import 'package:e_commerce_app_with_django/features/admin/presentation/providers/admin_drivers_provider.dart';
+import 'package:e_commerce_app_with_django/features/admin/domain/models/admin_driver.dart';
 
 class AdminOrdersPage extends ConsumerStatefulWidget {
   const AdminOrdersPage({super.key});
@@ -34,25 +36,100 @@ class _AdminOrdersPageState extends ConsumerState<AdminOrdersPage> {
     // Super admins can review all branches; branch admins see current branch only.
     final session = ref.read(authProvider).session;
     final branchId = ref.read(branchProvider).selectedBranchId;
-    await ref.read(orderProvider.notifier).loadOrders(
+    await ref
+        .read(orderProvider.notifier)
+        .loadOrders(
           branchId: session?.isSuperAdmin == true ? null : branchId,
           status: _statusFilter,
         );
   }
 
-  Future<void> _runAction(Future<void> Function() action, String successMessage) async {
+  Future<void> _runAction(
+    Future<void> Function() action,
+    String successMessage,
+  ) async {
     try {
       // Run admin action, then immediately refresh list so badges/chips stay accurate.
       await action();
       await _loadOrders();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(successMessage)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(successMessage)));
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('We could not update that order. Please try again.')),
+        const SnackBar(
+          content: Text('We could not update that order. Please try again.'),
+        ),
       );
     }
+  }
+
+  Future<void> _showOrderDetails({required Order order, required List<Branch> branches, required List<AdminDriver> drivers}) async {
+    final availableDrivers = drivers.where((driver) => driver.isOnline && driver.statusLabel != 'Busy').toList(growable: false);
+    String? selectedDriverId = order.driverId.isNotEmpty ? order.driverId : (availableDrivers.isNotEmpty ? availableDrivers.first.id : null);
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (dialogContext, setStateDialog) {
+            return AlertDialog(
+              title: Text('Order ${order.id}'),
+              content: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('Branch: ${_branchName(order.branchId, branches)}'),
+                    Text('Customer: ${order.customerName.isEmpty ? order.customerId : order.customerName}'),
+                    Text('Status: ${_orderStatusLabel(order.status)}'),
+                    Text('Payment: ${_paymentStatusLabel(order.payment.status)}'),
+                    Text('Driver: ${order.driverId.isEmpty ? 'Unassigned' : order.driverId}'),
+                    const SizedBox(height: 12),
+                    Text('Address: ${order.addressLine.isEmpty ? 'No delivery address' : order.addressLine}'),
+                    const SizedBox(height: 12),
+                    const Text('Items', style: TextStyle(fontWeight: FontWeight.bold)),
+                    for (final item in order.items)
+                      Text('${item.productName} x${item.quantity}'),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      initialValue: selectedDriverId,
+                      decoration: const InputDecoration(labelText: 'Assign driver'),
+                      items: availableDrivers
+                          .map((driver) => DropdownMenuItem<String>(value: driver.id, child: Text('${driver.name} (${driver.statusLabel})')))
+                          .toList(growable: false),
+                      onChanged: (value) => setStateDialog(() => selectedDriverId = value),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Close')),
+                    FilledButton(
+                      onPressed: selectedDriverId == null
+                          ? null
+                          : () async {
+                              // Pass the order's delivery address as the explicit
+                              // location payload so the driver receives precise
+                              // coordinates and address information when assigned.
+                              await ref.read(adminDriversProvider.notifier).assignDriverToOrder(
+                                orderId: order.id,
+                                driverId: selectedDriverId!,
+                                location: order.deliveryAddress,
+                              );
+                              await _loadOrders();
+                              if (dialogContext.mounted) Navigator.of(dialogContext).pop();
+                            },
+                      child: const Text('Assign driver'),
+                    ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -65,8 +142,12 @@ class _AdminOrdersPageState extends ConsumerState<AdminOrdersPage> {
         final priority = _priority(a.status).compareTo(_priority(b.status));
         return priority != 0 ? priority : b.createdAt.compareTo(a.createdAt);
       });
-    final pendingCount = orders.where((order) => order.status == OrderStatus.pending).length;
-    final paymentReviewCount = orders.where((order) => order.payment.status == PaymentStatus.pending).length;
+    final pendingCount = orders
+        .where((order) => order.status == OrderStatus.pending)
+        .length;
+    final paymentReviewCount = orders
+        .where((order) => order.payment.status == PaymentStatus.pending)
+        .length;
 
     return Scaffold(
       appBar: AppBar(
@@ -103,7 +184,9 @@ class _AdminOrdersPageState extends ConsumerState<AdminOrdersPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      pendingCount > 0 ? '$pendingCount pending order(s) need attention' : 'Orders are up to date',
+                      pendingCount > 0
+                          ? '$pendingCount pending order(s) need attention'
+                          : 'Orders are up to date',
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 8),
@@ -150,38 +233,60 @@ class _AdminOrdersPageState extends ConsumerState<AdminOrdersPage> {
               ),
               const SizedBox(height: 12),
               if (orderState.isLoading && orders.isEmpty)
-                const SizedBox(height: 260, child: Center(child: CircularProgressIndicator()))
+                const SizedBox(
+                  height: 260,
+                  child: Center(child: CircularProgressIndicator()),
+                )
               else if (orders.isEmpty)
-                const Center(child: Padding(padding: EdgeInsets.all(24), child: Text('No orders found.')))
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Text('No orders found.'),
+                  ),
+                )
               else
                 ...orders.map((order) {
                   // Compute which actions are currently valid for this order state.
-                  final canVerify = order.payment.status == PaymentStatus.pending;
-                  final canShip = order.status == OrderStatus.pending || order.status == OrderStatus.confirmed;
-                  final canDeliver = order.status == OrderStatus.shipped;
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(22),
-                      border: Border.all(color: const Color(0xFFE7ECF3)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+                  final canVerify =
+                      order.payment.status == PaymentStatus.pending;
+                  final canShip =
+                      order.status == OrderStatus.pending ||
+                      order.status == OrderStatus.confirmed;
+                  final canDeliver =
+                      order.status == OrderStatus.shipped ||
+                      order.status == OrderStatus.out_for_delivery;
+                  return GestureDetector(
+                    onTap: () => _showOrderDetails(order: order, branches: branches, drivers: ref.read(adminDriversProvider).maybeWhen(data: (value) => value, orElse: () => const <AdminDriver>[])),
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(22),
+                        border: Border.all(color: const Color(0xFFE7ECF3)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('Order ${order.id}', style: Theme.of(context).textTheme.titleMedium),
+                                  Text(
+                                    'Order ${order.id}',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleMedium,
+                                  ),
                                   const SizedBox(height: 4),
                                   Text(
                                     '${_branchName(order.branchId, branches)} - ${_formatDate(order.createdAt)}',
-                                    style: const TextStyle(color: Color(0xFF7B8091)),
+                                    style: const TextStyle(
+                                      color: Color(0xFF7B8091),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -195,20 +300,35 @@ class _AdminOrdersPageState extends ConsumerState<AdminOrdersPage> {
                             padding: const EdgeInsets.only(bottom: 6),
                             child: Row(
                               children: [
-                                Expanded(child: Text('${item.productName} x${item.quantity}')),
-                                Text(formatPrice(item.unitPrice * item.quantity)),
+                                Expanded(
+                                  child: Text(
+                                    '${item.productName} x${item.quantity}',
+                                  ),
+                                ),
+                                Text(
+                                  formatPrice(item.unitPrice * item.quantity),
+                                ),
                               ],
                             ),
                           ),
                         if (order.items.length > 3)
-                          Text('+ ${order.items.length - 3} more item(s)', style: const TextStyle(color: Color(0xFF7B8091))),
+                          Text(
+                            '+ ${order.items.length - 3} more item(s)',
+                            style: const TextStyle(color: Color(0xFF7B8091)),
+                          ),
                         const SizedBox(height: 10),
                         Wrap(
                           spacing: 8,
                           runSpacing: 8,
                           children: [
-                            Chip(label: Text('Payment: ${_paymentStatusLabel(order.payment.status)}')),
-                            Chip(label: Text('Total: ${formatPrice(order.total)}')),
+                            Chip(
+                              label: Text(
+                                'Payment: ${_paymentStatusLabel(order.payment.status)}',
+                              ),
+                            ),
+                            Chip(
+                              label: Text('Total: ${formatPrice(order.total)}'),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 10),
@@ -219,7 +339,9 @@ class _AdminOrdersPageState extends ConsumerState<AdminOrdersPage> {
                             if (canVerify)
                               OutlinedButton.icon(
                                 onPressed: () => _runAction(
-                                  () => ref.read(orderProvider.notifier).verifyPayment(
+                                  () => ref
+                                      .read(orderProvider.notifier)
+                                      .verifyPayment(
                                         orderId: order.id,
                                         paymentStatus: PaymentStatus.verified,
                                       ),
@@ -231,7 +353,9 @@ class _AdminOrdersPageState extends ConsumerState<AdminOrdersPage> {
                             if (canShip)
                               OutlinedButton.icon(
                                 onPressed: () => _runAction(
-                                  () => ref.read(orderProvider.notifier).updateStatus(
+                                  () => ref
+                                      .read(orderProvider.notifier)
+                                      .updateStatus(
                                         orderId: order.id,
                                         status: OrderStatus.shipped,
                                       ),
@@ -243,7 +367,9 @@ class _AdminOrdersPageState extends ConsumerState<AdminOrdersPage> {
                             if (canDeliver)
                               FilledButton.icon(
                                 onPressed: () => _runAction(
-                                  () => ref.read(orderProvider.notifier).updateStatus(
+                                  () => ref
+                                      .read(orderProvider.notifier)
+                                      .updateStatus(
                                         orderId: order.id,
                                         status: OrderStatus.delivered,
                                       ),
@@ -254,7 +380,13 @@ class _AdminOrdersPageState extends ConsumerState<AdminOrdersPage> {
                               ),
                           ],
                         ),
-                      ],
+                        const SizedBox(height: 8),
+                        Text(
+                          'Tap to view details and assign a driver.',
+                          style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                        ),
+                        ],
+                      ),
                     ),
                   );
                 }),
@@ -273,10 +405,14 @@ int _priority(OrderStatus status) {
       return 0;
     case OrderStatus.confirmed:
       return 1;
-    case OrderStatus.shipped:
+    case OrderStatus.assigned:
       return 2;
-    case OrderStatus.delivered:
+    case OrderStatus.out_for_delivery:
       return 3;
+    case OrderStatus.shipped:
+      return 4;
+    case OrderStatus.delivered:
+      return 5;
   }
 }
 
@@ -286,6 +422,10 @@ String _orderStatusLabel(OrderStatus status) {
       return 'Pending';
     case OrderStatus.confirmed:
       return 'Confirmed';
+    case OrderStatus.assigned:
+      return 'Assigned';
+    case OrderStatus.out_for_delivery:
+      return 'Out for delivery';
     case OrderStatus.shipped:
       return 'Shipped';
     case OrderStatus.delivered:

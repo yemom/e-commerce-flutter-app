@@ -6,13 +6,22 @@ const jwt = require('jsonwebtoken');
 
 const { jwtSecret, superAdminEmail } = require('../config/env');
 const { createAuthMiddleware, requireSuperAdmin } = require('../middleware/auth');
-const { User } = require('../models');
+const { User, Driver, Order } = require('../models');
 const { sendPasswordResetEmail } = require('../utils/mailer');
 const { syncSuperAdminAccount } = require('../utils/super-admin');
 
 function normalizeEmail(value) {
   // Keep email comparisons stable across signup/login flows.
   return String(value || '').trim().toLowerCase();
+}
+
+function normalizePhone(value) {
+  return String(value || '').trim();
+}
+
+function isLikelyPhone(value) {
+  const normalized = normalizePhone(value);
+  return /^[+\d][\d\s\-()]{5,}$/.test(normalized);
 }
 
 function hashResetToken(token) {
@@ -24,11 +33,57 @@ function sanitizeUser(userDoc) {
   // Never expose password hashes or internal fields to API consumers.
   return {
     id: userDoc.id,
-    email: userDoc.email,
+    email: userDoc.email || '',
+    phone: userDoc.phone || '',
     name: userDoc.name,
     role: userDoc.role,
     approved: userDoc.approved,
+    vehicleType: userDoc.vehicleType || '',
+    licenseNumber: userDoc.licenseNumber || '',
   };
+}
+
+function sanitizeDriver(userDoc, extra = {}) {
+  return {
+    ...sanitizeUser(userDoc),
+    vehicleType: userDoc.vehicleType || '',
+    licenseNumber: userDoc.licenseNumber || '',
+    isOnline: userDoc.isOnline !== false,
+    ...extra,
+  };
+}
+
+function normalizeString(value) {
+  return String(value || '').trim();
+}
+
+function buildOrderSummary(order) {
+  return {
+    id: order.id,
+    status: order.status,
+    customerId: order.customerId,
+    customerName: normalizeString(order.customerName),
+    branchId: order.branchId,
+    total: order.total ?? 0,
+    itemCount: Array.isArray(order.items) ? order.items.length : 0,
+    deliveryAddressLine: normalizeString(order.deliveryAddress?.line1),
+    createdAt: order.createdAt,
+    deliveredAt: order.deliveredAt ?? null,
+  };
+}
+
+async function buildDriverPayload(user) {
+  const assignedOrders = await Order.find({ driverId: user.id }).sort({ createdAt: -1 });
+  const deliveredOrders = assignedOrders.filter((order) => order.status === 'delivered');
+  const activeOrdersCount = assignedOrders.filter((order) => ['assigned', 'out_for_delivery', 'shipped'].includes(order.status)).length;
+  const currentStatus = activeOrdersCount > 0 ? 'busy' : (user.isOnline ? 'available' : 'offline');
+
+  return sanitizeDriver(user, {
+    currentStatus,
+    activeOrdersCount,
+    assignedOrders: assignedOrders.map(buildOrderSummary),
+    deliveryHistory: deliveredOrders.map(buildOrderSummary),
+  });
 }
 
 function signToken(userDoc) {
@@ -44,39 +99,261 @@ function signToken(userDoc) {
   );
 }
 
+function buildUserLoginResponse(user) {
+  return {
+    token: signToken(user),
+    user: sanitizeUser(user),
+  };
+}
+
+function buildDriverLoginResponse(driver) {
+  const token = jwt.sign(
+    { sub: driver.id, role: 'driver', email: driver.email, phone: driver.phone },
+    jwtSecret,
+    { expiresIn: '7d' },
+  );
+
+  return {
+    token,
+    user: {
+      id: driver.id,
+      email: driver.email,
+      name: driver.name,
+      role: 'driver',
+      approved: true,
+    },
+  };
+}
+
+async function loginSharedAccount(rawIdentifier, password) {
+  const email = normalizeEmail(rawIdentifier);
+  const normalizedPhone = normalizePhone(rawIdentifier);
+
+  const user = rawIdentifier.includes('@')
+    ? await User.findOne({ email })
+    : await User.findOne({ $or: [{ email }, { phone: normalizedPhone }] });
+  if (user) {
+    const passwordMatches = await bcrypt.compare(password, user.passwordHash);
+    if (!passwordMatches) {
+      return { status: 401, body: { message: 'The email or password is not correct. Please try again.' } };
+    }
+
+    if (user.role === 'admin' && !user.approved) {
+      return {
+        status: 403,
+        body: { message: 'Your admin account is waiting for super admin approval. Please try again later.' },
+      };
+    }
+
+    if (user.email === superAdminEmail) {
+      await syncSuperAdminAccount();
+      user.role = 'super_admin';
+      user.approved = true;
+    }
+
+    return { status: 200, body: buildUserLoginResponse(user) };
+  }
+
+  const driver = rawIdentifier.includes('@')
+    ? await Driver.findOne({ email })
+    : await Driver.findOne({ $or: [{ email }, { phone: normalizedPhone }] });
+  if (!driver) {
+    return { status: 401, body: { message: 'The email or password is not correct. Please try again.' } };
+  }
+
+  const driverPasswordMatches = await bcrypt.compare(password, driver.passwordHash);
+  if (!driverPasswordMatches) {
+    return { status: 401, body: { message: 'The email or password is not correct. Please try again.' } };
+  }
+
+  return { status: 200, body: buildDriverLoginResponse(driver) };
+}
+
+async function loginUserOnly(rawIdentifier, password) {
+  const email = normalizeEmail(rawIdentifier);
+  const normalizedPhone = normalizePhone(rawIdentifier);
+  const user = rawIdentifier.includes('@')
+    ? await User.findOne({ email, role: 'user' })
+    : await User.findOne({ $or: [{ email }, { phone: normalizedPhone }], role: 'user' });
+
+  if (!user) {
+    return { status: 401, body: { message: 'The email or password is not correct. Please try again.' } };
+  }
+
+  const matches = await bcrypt.compare(password, user.passwordHash);
+  if (!matches) {
+    return { status: 401, body: { message: 'The email or password is not correct. Please try again.' } };
+  }
+
+  return { status: 200, body: buildUserLoginResponse(user) };
+}
+
+async function loginAdminOnly(rawIdentifier, password) {
+  const email = normalizeEmail(rawIdentifier);
+  const normalizedPhone = normalizePhone(rawIdentifier);
+  const user = rawIdentifier.includes('@')
+    ? await User.findOne({ email, role: { $in: ['admin', 'super_admin'] } })
+    : await User.findOne({ $or: [{ email }, { phone: normalizedPhone }], role: { $in: ['admin', 'super_admin'] } });
+
+  if (!user) {
+    return { status: 401, body: { message: 'The email or password is not correct. Please try again.' } };
+  }
+
+  const matches = await bcrypt.compare(password, user.passwordHash);
+  if (!matches) {
+    return { status: 401, body: { message: 'The email or password is not correct. Please try again.' } };
+  }
+
+  if (user.role === 'admin' && !user.approved) {
+    return {
+      status: 403,
+      body: { message: 'Your admin account is waiting for super admin approval. Please try again later.' },
+    };
+  }
+
+  if (user.email === superAdminEmail) {
+    await syncSuperAdminAccount();
+    user.role = 'super_admin';
+    user.approved = true;
+  }
+
+  return { status: 200, body: buildUserLoginResponse(user) };
+}
+
+async function loginDriverOnly(rawIdentifier, password) {
+  const email = normalizeEmail(rawIdentifier);
+  const normalizedPhone = normalizePhone(rawIdentifier);
+  const driver = rawIdentifier.includes('@')
+    ? await Driver.findOne({ email })
+    : await Driver.findOne({ $or: [{ email }, { phone: normalizedPhone }] });
+
+  if (!driver) {
+    return { status: 401, body: { message: 'The email or password is not correct. Please try again.' } };
+  }
+
+  const matches = await bcrypt.compare(password, driver.passwordHash);
+  if (!matches) {
+    return { status: 401, body: { message: 'The email or password is not correct. Please try again.' } };
+  }
+
+  return { status: 200, body: buildDriverLoginResponse(driver) };
+}
+
 function createAuthRouter() {
   const router = express.Router();
   const auth = createAuthMiddleware();
 
-  router.post('/auth/signup', async (req, res) => {
-    const fullName = String(req.body.fullName || '').trim();
-    const email = normalizeEmail(req.body.email);
+  async function loginWithRole(req, res, expectedRoles) {
+    const rawIdentifier = String(req.body.identifier || req.body.email || req.body.phone || '').trim();
+    const email = normalizeEmail(rawIdentifier);
     const password = String(req.body.password || '').trim();
 
-    if (!email || !email.includes('@')) {
-      return res.status(400).json({ message: 'Please provide a valid email address.' });
+    if (!rawIdentifier || !password) {
+      return res.status(400).json({ message: 'Email/phone and password are required.' });
+    }
+
+    const normalizedPhone = normalizePhone(rawIdentifier);
+    const lookup = rawIdentifier.includes('@')
+      ? { email }
+      : { $or: [{ email }, { phone: normalizedPhone }] };
+
+    const user = await User.findOne(lookup);
+    if (user && expectedRoles.includes(user.role)) {
+      const passwordMatches = await bcrypt.compare(password, user.passwordHash);
+      if (!passwordMatches) {
+        return res.status(401).json({ message: 'The email or password is not correct. Please try again.' });
+      }
+
+      if (user.role === 'admin' && !user.approved) {
+        return res.status(403).json({ message: 'Your admin account is waiting for super admin approval. Please try again later.' });
+      }
+
+      const token = signToken(user);
+      if (user.email === superAdminEmail) {
+        await syncSuperAdminAccount();
+        user.role = 'super_admin';
+        user.approved = true;
+      }
+
+      return res.json({ token, user: sanitizeUser(user) });
+    }
+
+    const driver = await Driver.findOne(lookup);
+    if (driver && expectedRoles.includes('driver')) {
+      const driverPasswordMatches = await bcrypt.compare(password, driver.passwordHash);
+      if (!driverPasswordMatches) {
+        return res.status(401).json({ message: 'The email or password is not correct. Please try again.' });
+      }
+
+      return res.json({
+        token: jwt.sign(
+          { sub: driver.id, role: 'driver', email: driver.email, phone: driver.phone },
+          jwtSecret,
+          { expiresIn: '7d' },
+        ),
+        user: {
+          id: driver.id,
+          email: driver.email,
+          name: driver.name,
+          role: 'driver',
+          approved: true,
+        },
+      });
+    }
+
+    return res.status(401).json({ message: 'The email or password is not correct. Please try again.' });
+  }
+
+  const registerHandler = async (req, res) => {
+    const fullName = String(req.body.fullName || req.body.name || '').trim();
+    const identifier = String(req.body.identifier || '').trim();
+    const inputEmail = normalizeEmail(req.body.email);
+    const inputPhone = normalizePhone(req.body.phone);
+    const password = String(req.body.password || '').trim();
+    const registerAsDriver = req.body.registerAsDriver === true || req.body.role === 'driver';
+
+    const email = inputEmail || (identifier.includes('@') ? normalizeEmail(identifier) : '');
+    const phone = inputPhone || (!identifier.includes('@') && isLikelyPhone(identifier) ? normalizePhone(identifier) : '');
+
+    if (!email && !phone) {
+      return res.status(400).json({ message: 'Provide a valid email or phone number.' });
     }
     if (password.length < 6) {
       return res.status(400).json({ message: 'Password must be at least 6 characters long.' });
     }
+    if (registerAsDriver) {
+      const vehicleType = String(req.body.vehicleType || '').trim();
+      const licenseNumber = String(req.body.licenseNumber || '').trim();
+      if (!vehicleType || !licenseNumber) {
+        return res.status(400).json({ message: 'Vehicle type and license number are required for driver registration.' });
+      }
+    }
 
-    const existing = await User.findOne({ email });
+    const existing = await User.findOne({
+      $or: [
+        ...(email ? [{ email }] : []),
+        ...(phone ? [{ phone }] : []),
+      ],
+    });
     if (existing) {
-      return res.status(409).json({ message: 'This email is already registered. Please sign in instead.' });
+      return res.status(409).json({ message: 'This email or phone is already registered. Please sign in instead.' });
     }
 
     // Super-admin account is tied to the configured email; all others start as regular users.
-    const role = email === superAdminEmail ? 'super_admin' : 'user';
+    const role = email === superAdminEmail ? 'super_admin' : (registerAsDriver ? 'driver' : 'user');
     const approved = role !== 'admin';
     const passwordHash = await bcrypt.hash(password, 10);
 
     const user = await User.create({
       id: crypto.randomUUID(),
-      email,
-      name: fullName || email.split('@')[0],
+      email: email || undefined,
+      phone: phone || undefined,
+      name: fullName || (email ? email.split('@')[0] : phone),
       passwordHash,
       role,
       approved,
+      vehicleType: registerAsDriver ? String(req.body.vehicleType || '').trim() : '',
+      licenseNumber: registerAsDriver ? String(req.body.licenseNumber || '').trim() : '',
     });
 
     const token = signToken(user);
@@ -85,40 +362,78 @@ function createAuthRouter() {
       await syncSuperAdminAccount();
     }
     return res.status(201).json({ token, user: sanitizeUser(user) });
-  });
+  };
+
+  router.post('/auth/register', registerHandler);
+  router.post('/auth/signup', registerHandler);
 
   router.post('/auth/login', async (req, res) => {
-    const email = normalizeEmail(req.body.email);
+    const rawIdentifier = String(req.body.identifier || req.body.email || req.body.phone || '').trim();
+    const email = normalizeEmail(rawIdentifier);
     const password = String(req.body.password || '').trim();
 
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Email and password are required.' });
+    if (!rawIdentifier || !password) {
+      return res.status(400).json({ message: 'Email/phone and password are required.' });
     }
 
-    const user = await User.findOne({ email });
-    if (!user) {
+    const normalizedPhone = normalizePhone(rawIdentifier);
+    const user = rawIdentifier.includes('@')
+      ? await User.findOne({ email })
+      : await User.findOne({ $or: [{ email }, { phone: normalizedPhone }] });
+    if (user) {
+      const passwordMatches = await bcrypt.compare(password, user.passwordHash);
+      if (!passwordMatches) {
+        return res.status(401).json({ message: 'The email or password is not correct. Please try again.' });
+      }
+
+      if (user.role === 'admin' && !user.approved) {
+        // Admin accounts require explicit approval before elevated access is granted.
+        return res.status(403).json({ message: 'Your admin account is waiting for super admin approval. Please try again later.' });
+      }
+
+      const token = signToken(user);
+      if (user.email === superAdminEmail) {
+        // Enforce super-admin authority for the configured owner email even after manual DB edits.
+        await syncSuperAdminAccount();
+        user.role = 'super_admin';
+        user.approved = true;
+      }
+      return res.json({ token, user: sanitizeUser(user) });
+    }
+
+    const driver = rawIdentifier.includes('@')
+      ? await Driver.findOne({ email })
+      : await Driver.findOne({ $or: [{ email }, { phone: normalizedPhone }] });
+    if (!driver) {
       return res.status(401).json({ message: 'The email or password is not correct. Please try again.' });
     }
 
-    const passwordMatches = await bcrypt.compare(password, user.passwordHash);
-    if (!passwordMatches) {
+    const driverPasswordMatches = await bcrypt.compare(password, driver.passwordHash);
+    if (!driverPasswordMatches) {
       return res.status(401).json({ message: 'The email or password is not correct. Please try again.' });
     }
 
-    if (user.role === 'admin' && !user.approved) {
-      // Admin accounts require explicit approval before elevated access is granted.
-      return res.status(403).json({ message: 'Your admin account is waiting for super admin approval. Please try again later.' });
-    }
+    const token = jwt.sign(
+      { sub: driver.id, role: 'driver', email: driver.email, phone: driver.phone },
+      jwtSecret,
+      { expiresIn: '7d' },
+    );
 
-    const token = signToken(user);
-    if (user.email === superAdminEmail) {
-      // Enforce super-admin authority for the configured owner email even after manual DB edits.
-      await syncSuperAdminAccount();
-      user.role = 'super_admin';
-      user.approved = true;
-    }
-    return res.json({ token, user: sanitizeUser(user) });
+    return res.json({
+      token,
+      user: {
+        id: driver.id,
+        email: driver.email,
+        name: driver.name,
+        role: 'driver',
+        approved: true,
+      },
+    });
   });
+
+  router.post('/auth/user', async (req, res) => loginWithRole(req, res, ['user']));
+  router.post('/auth/admin', async (req, res) => loginWithRole(req, res, ['admin', 'super_admin']));
+  router.post('/auth/driver', async (req, res) => loginWithRole(req, res, ['driver']));
 
   router.post('/auth/password-reset/request', async (req, res) => {
     const email = normalizeEmail(req.body.email);
@@ -204,11 +519,133 @@ function createAuthRouter() {
     return res.json({ user: sanitizeUser(req.auth.user) });
   });
 
+  router.get('/auth/users', auth, requireSuperAdmin, async (req, res) => {
+    // Super-admin can inspect every registered account without exposing sensitive fields.
+    const users = await User.find({}).sort({ createdAt: -1, email: 1 });
+    return res.json(users.map(sanitizeUser));
+  });
+
   router.get('/auth/admin-accounts', auth, requireSuperAdmin, async (req, res) => {
     // Includes super-admin records so ownership and approvals can be audited in one place.
     const accounts = await User.find({ role: { $in: ['admin', 'super_admin'] } }).sort({ email: 1 });
     return res.json(accounts.map(sanitizeUser));
   });
+
+  router.get('/auth/drivers', auth, requireSuperAdmin, async (req, res) => {
+    const { q, status, vehicleType } = req.query;
+    const filter = { role: 'driver' };
+
+    if (vehicleType) {
+      filter.vehicleType = vehicleType;
+    }
+    if (q) {
+      const pattern = new RegExp(String(q), 'i');
+      filter.$or = [{ name: pattern }, { email: pattern }, { phone: pattern }, { vehicleType: pattern }, { licenseNumber: pattern }];
+    }
+
+    const users = await User.find(filter).sort({ createdAt: -1 });
+    const payload = await Promise.all(users.map((user) => buildDriverPayload(user)));
+    const requestedStatus = typeof status === 'string' ? status.trim().toLowerCase() : '';
+    if (['available', 'busy', 'offline'].includes(requestedStatus)) {
+      return res.json(payload.filter((driver) => driver.currentStatus === requestedStatus));
+    }
+    return res.json(payload);
+  });
+
+  router.get('/auth/drivers/:userId', auth, requireSuperAdmin, async (req, res) => {
+    const user = await User.findOne({ id: req.params.userId, role: 'driver' });
+    if (!user) {
+      return res.status(404).json({ message: 'Driver not found.' });
+    }
+    return res.json(await buildDriverPayload(user));
+  });
+
+  router.post('/auth/drivers', auth, requireSuperAdmin, async (req, res) => {
+    const name = String(req.body.name || '').trim();
+    const phone = normalizeString(req.body.phone);
+    const email = normalizeEmail(req.body.email);
+    const password = String(req.body.password || '').trim();
+    const vehicleType = normalizeString(req.body.vehicleType);
+    const licenseNumber = normalizeString(req.body.licenseNumber);
+    const isOnline = !!req.body.isOnline;
+
+    if (!name || (!phone && !email) || !password) {
+      return res.status(400).json({ message: 'name, email or phone, and password are required.' });
+    }
+    if (!vehicleType || !licenseNumber) {
+      return res.status(400).json({ message: 'vehicleType and licenseNumber are required.' });
+    }
+
+    const existing = await User.findOne({
+      role: 'driver',
+      $or: [
+        ...(email ? [{ email }] : []),
+        ...(phone ? [{ phone }] : []),
+      ],
+    });
+    if (existing) {
+      return res.status(409).json({ message: 'A driver with this phone or email already exists.' });
+    }
+
+    const user = await User.create({
+      id: crypto.randomUUID(),
+      email: email || undefined,
+      phone: phone || undefined,
+      name,
+      passwordHash: await bcrypt.hash(password, 10),
+      role: 'driver',
+      approved: true,
+      vehicleType,
+      licenseNumber,
+    });
+
+    return res.status(201).json(await buildDriverPayload(user));
+  });
+
+  router.patch('/auth/drivers/:userId', auth, requireSuperAdmin, async (req, res) => {
+    const updates = {};
+    ['name', 'phone', 'email', 'vehicleType', 'licenseNumber'].forEach((field) => {
+      if (Object.prototype.hasOwnProperty.call(req.body, field)) {
+        updates[field] = field === 'email'
+          ? normalizeEmail(req.body[field])
+          : normalizeString(req.body[field]);
+      }
+    });
+    if (Object.prototype.hasOwnProperty.call(req.body, 'isOnline')) {
+      updates.isOnline = !!req.body.isOnline;
+    }
+    if (req.body.password) {
+      updates.passwordHash = await bcrypt.hash(String(req.body.password).trim(), 10);
+    }
+
+    const user = await User.findOneAndUpdate(
+      { id: req.params.userId, role: 'driver' },
+      { $set: updates },
+      { returnDocument: 'after' },
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: 'Driver not found.' });
+    }
+
+    return res.json(await buildDriverPayload(user));
+  });
+
+  router.delete('/auth/drivers/:userId', auth, requireSuperAdmin, async (req, res) => {
+    const user = await User.findOneAndDelete({ id: req.params.userId, role: 'driver' });
+    if (!user) {
+      return res.status(404).json({ message: 'Driver not found.' });
+    }
+
+    await Order.updateMany(
+      { driverId: user.id },
+      { $set: { driverId: null, status: 'pending', outForDeliveryAt: null, deliveredAt: null } },
+    );
+
+    return res.json({ message: 'Driver deleted.' });
+  });
+
+  // Convenience: expose all users to super admin (already added earlier) - keep for compatibility.
 
   router.get('/auth/admin-accounts/:userId', auth, requireSuperAdmin, async (req, res) => {
     const user = await User.findOne({ id: req.params.userId, role: { $in: ['admin', 'super_admin'] } });

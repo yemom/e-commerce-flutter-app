@@ -26,6 +26,7 @@ class AdminDashboardBody extends StatelessWidget {
     required this.onAddProduct,
     required this.onOpenOrdersPage,
     required this.onOpenInventoryPage,
+    this.onOpenDriversPage, // The driver shortcut is routed from the shell level; this body keeps it optional for layout reuse.
     required this.onOpenBranchesPage,
     required this.onOpenCategoriesPage,
     required this.onOpenAdminRequestsPage,
@@ -46,6 +47,7 @@ class AdminDashboardBody extends StatelessWidget {
   final VoidCallback onAddProduct;
   final VoidCallback? onOpenOrdersPage;
   final VoidCallback? onOpenInventoryPage;
+  final VoidCallback? onOpenDriversPage;
   final VoidCallback? onOpenBranchesPage;
   final VoidCallback? onOpenCategoriesPage;
   final VoidCallback? onOpenAdminRequestsPage;
@@ -62,8 +64,9 @@ class AdminDashboardBody extends StatelessWidget {
       categories: adminCategories,
       adminAccounts: adminAccounts,
     );
-    final currentAdminName =
-    adminAccounts.isNotEmpty ? adminAccounts.first.name : 'Admin';
+    final currentAdminName = adminAccounts.isNotEmpty
+        ? adminAccounts.first.name
+        : 'Admin';
 
     return Container(
       decoration: const BoxDecoration(
@@ -98,7 +101,8 @@ class AdminDashboardBody extends StatelessWidget {
                     paymentCount: adminPaymentOptions.length,
                     pendingAdminCount: viewData.pendingRequests.length,
                     activeAdminCount: viewData.activeAdmins.length,
-                    sectionTags: roleSections, adminName: currentAdminName,
+                    sectionTags: roleSections,
+                    adminName: currentAdminName,
                   ),
                   const SizedBox(height: 14),
                   // Analytics stay near the top because they explain why the rest of the dashboard matters.
@@ -123,6 +127,7 @@ class AdminDashboardBody extends StatelessWidget {
                       adminPaymentOptions: adminPaymentOptions,
                       onAddProduct: onAddProduct,
                       onOpenInventoryPage: onOpenInventoryPage,
+                      onOpenDriversPage: onOpenDriversPage,
                       onOpenOrdersPage: onOpenOrdersPage,
                       onOpenAdminRequestsPage: onOpenAdminRequestsPage,
                       onOpenBranchesPage: onOpenBranchesPage,
@@ -142,6 +147,7 @@ class AdminDashboardBody extends StatelessWidget {
                       adminPaymentOptions: adminPaymentOptions,
                       onAddProduct: onAddProduct,
                       onOpenInventoryPage: onOpenInventoryPage,
+                      onOpenDriversPage: onOpenDriversPage,
                       onOpenOrdersPage: onOpenOrdersPage,
                       onOpenAdminRequestsPage: onOpenAdminRequestsPage,
                       onOpenBranchesPage: onOpenBranchesPage,

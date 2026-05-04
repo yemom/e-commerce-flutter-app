@@ -12,6 +12,7 @@ import 'package:e_commerce_app_with_django/features/admin/presentation/screens/a
 import 'package:e_commerce_app_with_django/features/admin/presentation/screens/admin_branches_screen.dart';
 import 'package:e_commerce_app_with_django/features/admin/presentation/screens/admin_categories_screen.dart';
 import 'package:e_commerce_app_with_django/features/admin/presentation/screens/admin_dashboard_screen.dart';
+import 'package:e_commerce_app_with_django/features/admin/presentation/screens/admin_drivers_screen.dart';
 import 'package:e_commerce_app_with_django/features/admin/presentation/screens/admin_inventory_screen.dart';
 import 'package:e_commerce_app_with_django/features/admin/presentation/screens/admin_orders_screen.dart';
 import 'package:e_commerce_app_with_django/features/admin/presentation/screens/admin_payment_options_screen.dart';
@@ -64,10 +65,11 @@ class AdminPortalShell extends ConsumerWidget {
             'Categories',
             'Orders',
             'Payments',
+            'Drivers',
             'Admins',
             'Branches',
           ]
-        : const ['Products', 'Orders', 'Payments', 'Categories'];
+        : const ['Products', 'Orders', 'Payments', 'Drivers', 'Categories'];
     final adminCategories = adminSettingsState.categories.isNotEmpty
         ? adminSettingsState.categories
         : categoryState.categories;
@@ -165,6 +167,9 @@ class AdminPortalShell extends ConsumerWidget {
           ),
         );
       },
+      onOpenDriversPage: () {
+        navigation.push(const AdminDriversScreen());
+      },
       onOpenBranchesPage: isSuperAdmin
           ? () {
               navigation.push(
@@ -219,35 +224,33 @@ class AdminPortalShell extends ConsumerWidget {
   }
 
   Future<void> _openAddProduct(
-  WidgetRef ref, {
-  required List<Category> categories,
-  required List<Branch> branches,
-}) async {
-  final navigation = ref.read(appNavigationServiceProvider);
-  final adminService = ref.read(adminPortalServiceProvider);
+    WidgetRef ref, {
+    required List<Category> categories,
+    required List<Branch> branches,
+  }) async {
+    final navigation = ref.read(appNavigationServiceProvider);
+    final adminService = ref.read(adminPortalServiceProvider);
 
-  await navigation.push(
-    AddProductScreen(
-      categories: categories,
-      branches: branches,
+    await navigation.push(
+      AddProductScreen(
+        categories: categories,
+        branches: branches,
 
-      /// ✅ FIXED WRAPPER
-      onUploadImage: ({
-        required List<int> bytes,
-        required String fileName,
-      }) async {
-        return await adminService.uploadProductImage(
-          bytes: bytes,
-          fileName: fileName,
-        );
-      },
+        /// ✅ FIXED WRAPPER
+        onUploadImage:
+            ({required List<int> bytes, required String fileName}) async {
+              return await adminService.uploadProductImage(
+                bytes: bytes,
+                fileName: fileName,
+              );
+            },
 
-      /// ✅ SUBMIT PRODUCT
-      onSubmit: (product) async {
-        await adminService.addProduct(product);
-        navigation.pop();
-      },
-    ),
-  );
-}
+        /// ✅ SUBMIT PRODUCT
+        onSubmit: (product) async {
+          await adminService.addProduct(product);
+          navigation.pop();
+        },
+      ),
+    );
+  }
 }

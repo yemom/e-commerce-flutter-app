@@ -1,0 +1,39 @@
+{
+  "info": {
+    "name": "Delivery API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Driver Register",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Bob\",\n  \"phone\": \"+251912345678\",\n  \"password\": \"secret\",\n  \"vehicleType\": \"bike\",\n  \"licenseNumber\": \"ABC123\"\n}"
+        },
+        "url": { "raw": "http://localhost:8000/api/drivers/register", "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["api","drivers","register"] }
+      }
+    },
+    {
+      "name": "Driver Login",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{ \"phone\": \"+251912345678\", \"password\": \"secret\" }" },
+        "url": { "raw": "http://localhost:8000/api/drivers/login", "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["api","drivers","login"] }
+      }
+    },
+    {
+      "name": "Get All Users (admin)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "http://localhost:8000/api/auth/users", "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["api","auth","users"] }
+      }
+    }
+  ]
+}

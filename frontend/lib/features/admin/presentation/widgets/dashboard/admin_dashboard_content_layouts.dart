@@ -20,6 +20,7 @@ class AdminDashboardWideBodyLayout extends StatelessWidget {
     required this.adminPaymentOptions,
     required this.onAddProduct,
     required this.onOpenInventoryPage,
+    this.onOpenDriversPage,
     required this.onOpenOrdersPage,
     required this.onOpenAdminRequestsPage,
     required this.onOpenBranchesPage,
@@ -38,6 +39,8 @@ class AdminDashboardWideBodyLayout extends StatelessWidget {
   final List<PaymentOption> adminPaymentOptions;
   final VoidCallback onAddProduct;
   final VoidCallback? onOpenInventoryPage;
+  // The driver shortcut is optional so the layout stays reusable in non-driver admin views.
+  final VoidCallback? onOpenDriversPage;
   final VoidCallback? onOpenOrdersPage;
   final VoidCallback? onOpenAdminRequestsPage;
   final VoidCallback? onOpenBranchesPage;
@@ -78,6 +81,7 @@ class AdminDashboardWideBodyLayout extends StatelessWidget {
             superAdmins: viewData.superAdmins,
             pendingRequests: viewData.pendingRequests,
             onOpenBranchesPage: onOpenBranchesPage,
+            onOpenDriversPage: onOpenDriversPage,
             onOpenCategoriesPage: onOpenCategoriesPage,
             onOpenAdminRequestsPage: onOpenAdminRequestsPage,
             onOpenPaymentOptionsPage: onOpenPaymentOptionsPage,
@@ -101,6 +105,7 @@ class AdminDashboardStackedBodyLayout extends StatelessWidget {
     required this.adminPaymentOptions,
     required this.onAddProduct,
     required this.onOpenInventoryPage,
+    this.onOpenDriversPage,
     required this.onOpenOrdersPage,
     required this.onOpenAdminRequestsPage,
     required this.onOpenBranchesPage,
@@ -119,6 +124,8 @@ class AdminDashboardStackedBodyLayout extends StatelessWidget {
   final List<PaymentOption> adminPaymentOptions;
   final VoidCallback onAddProduct;
   final VoidCallback? onOpenInventoryPage;
+  // The driver shortcut is optional so the stacked layout can stay generic.
+  final VoidCallback? onOpenDriversPage;
   final VoidCallback? onOpenOrdersPage;
   final VoidCallback? onOpenAdminRequestsPage;
   final VoidCallback? onOpenBranchesPage;
@@ -158,6 +165,7 @@ class AdminDashboardStackedBodyLayout extends StatelessWidget {
           superAdmins: viewData.superAdmins,
           pendingRequests: viewData.pendingRequests,
           onOpenBranchesPage: onOpenBranchesPage,
+          onOpenDriversPage: onOpenDriversPage,
           onOpenCategoriesPage: onOpenCategoriesPage,
           onOpenAdminRequestsPage: onOpenAdminRequestsPage,
           onOpenPaymentOptionsPage: onOpenPaymentOptionsPage,

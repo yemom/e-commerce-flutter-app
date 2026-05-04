@@ -14,9 +14,10 @@ async function startServer() {
   const app = buildApp();
 
   // 4) Start listening only after dependencies above are ready.
-  app.listen(port, () => {
+  // Bind to all interfaces so the API is reachable from other devices on the LAN
+  app.listen(port, '0.0.0.0', () => {
     console.log('MongoDB connected');
-    console.log(`API running on http://localhost:${port}`);
+    console.log(`API running on http://0.0.0.0:${port}`);
   });
 }
 

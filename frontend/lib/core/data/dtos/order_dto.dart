@@ -1,10 +1,16 @@
 /// Converts raw order data into the app's order model.
 library;
+
 import 'package:e_commerce_app_with_django/core/data/dtos/payment_dto.dart';
 import 'package:e_commerce_app_with_django/features/orders/domain/models/order.dart';
 
 OrderStatus _orderStatusFromString(String value) {
-  return OrderStatus.values.firstWhere((status) => status.name == value);
+  for (final status in OrderStatus.values) {
+    if (status.name == value) {
+      return status;
+    }
+  }
+  return OrderStatus.confirmed;
 }
 
 class OrderItemDto {
@@ -62,6 +68,9 @@ class OrderDto {
     required this.id,
     required this.branchId,
     required this.customerId,
+    this.customerName = '',
+    this.customerEmail = '',
+    this.deliveryAddress = const <String, dynamic>{},
     required this.items,
     required this.status,
     required this.payment,
@@ -69,11 +78,18 @@ class OrderDto {
     required this.deliveryFee,
     required this.total,
     required this.createdAt,
+    this.driverId = '',
+    this.assignedDriver = const <String, dynamic>{},
+    this.outForDeliveryAt,
+    this.deliveredAt,
   });
 
   final String id;
   final String branchId;
   final String customerId;
+  final String customerName;
+  final String customerEmail;
+  final Map<String, dynamic> deliveryAddress;
   final List<OrderItemDto> items;
   final OrderStatus status;
   final PaymentDto payment;
@@ -81,12 +97,22 @@ class OrderDto {
   final double deliveryFee;
   final double total;
   final DateTime createdAt;
+  final String driverId;
+  final Map<String, dynamic> assignedDriver;
+  final DateTime? outForDeliveryAt;
+  final DateTime? deliveredAt;
 
   factory OrderDto.fromJson(Map<String, dynamic> json) {
     return OrderDto(
       id: json['id'] as String,
       branchId: json['branchId'] as String,
       customerId: json['customerId'] as String,
+      customerName: (json['customerName'] as String?)?.trim() ?? '',
+      customerEmail: (json['customerEmail'] as String?)?.trim() ?? '',
+      deliveryAddress: Map<String, dynamic>.from(
+        json['deliveryAddress'] as Map<String, dynamic>? ??
+            const <String, dynamic>{},
+      ),
       items: (json['items'] as List<dynamic>)
           .map((item) => OrderItemDto.fromJson(item as Map<String, dynamic>))
           .toList(),
@@ -96,6 +122,13 @@ class OrderDto {
       deliveryFee: (json['deliveryFee'] as num).toDouble(),
       total: (json['total'] as num).toDouble(),
       createdAt: DateTime.parse(json['createdAt'] as String),
+      driverId: (json['driverId'] as String?)?.trim() ?? '',
+      assignedDriver: Map<String, dynamic>.from(
+        json['assignedDriver'] as Map<String, dynamic>? ??
+            const <String, dynamic>{},
+      ),
+      outForDeliveryAt: _asDateTime(json['outForDeliveryAt']),
+      deliveredAt: _asDateTime(json['deliveredAt']),
     );
   }
 
@@ -104,6 +137,9 @@ class OrderDto {
       'id': id,
       'branchId': branchId,
       'customerId': customerId,
+      'customerName': customerName,
+      'customerEmail': customerEmail,
+      'deliveryAddress': deliveryAddress,
       'items': items.map((item) => item.toJson()).toList(),
       'status': status.name,
       'payment': payment.toJson(),
@@ -111,6 +147,10 @@ class OrderDto {
       'deliveryFee': deliveryFee,
       'total': total,
       'createdAt': createdAt.toIso8601String(),
+      'driverId': driverId,
+      'assignedDriver': assignedDriver,
+      'outForDeliveryAt': outForDeliveryAt?.toIso8601String(),
+      'deliveredAt': deliveredAt?.toIso8601String(),
     };
   }
 
@@ -119,6 +159,9 @@ class OrderDto {
       id: id,
       branchId: branchId,
       customerId: customerId,
+      customerName: customerName,
+      customerEmail: customerEmail,
+      deliveryAddress: deliveryAddress,
       items: items.map((item) => item.toDomain()).toList(),
       status: status,
       payment: payment.toDomain(),
@@ -126,6 +169,10 @@ class OrderDto {
       deliveryFee: deliveryFee,
       total: total,
       createdAt: createdAt,
+      driverId: driverId,
+      assignedDriver: assignedDriver,
+      outForDeliveryAt: outForDeliveryAt,
+      deliveredAt: deliveredAt,
     );
   }
 
@@ -134,6 +181,9 @@ class OrderDto {
       id: order.id,
       branchId: order.branchId,
       customerId: order.customerId,
+      customerName: order.customerName,
+      customerEmail: order.customerEmail,
+      deliveryAddress: order.deliveryAddress,
       items: order.items.map(OrderItemDto.fromDomain).toList(),
       status: order.status,
       payment: PaymentDto.fromDomain(order.payment),
@@ -141,6 +191,17 @@ class OrderDto {
       deliveryFee: order.deliveryFee,
       total: order.total,
       createdAt: order.createdAt,
+      driverId: order.driverId,
+      assignedDriver: order.assignedDriver,
+      outForDeliveryAt: order.outForDeliveryAt,
+      deliveredAt: order.deliveredAt,
     );
+  }
+
+  static DateTime? _asDateTime(Object? value) {
+    if (value is String && value.trim().isNotEmpty) {
+      return DateTime.tryParse(value);
+    }
+    return null;
   }
 }

@@ -11,7 +11,8 @@
   "scripts": {
     "start": "node server.js",
     "server": "node server.js",
-    "check:server": "node --check server.js"
+    "check:server": "node --check server.js",
+    "test": "node --test"
   },
   "repository": {
     "type": "git",

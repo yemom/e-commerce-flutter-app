@@ -19,6 +19,9 @@ class OrderPreviewService {
     required PaymentMethod selectedMethod,
     required String branchId,
     required String customerId,
+    required String customerName,
+    required String customerEmail,
+    required String deliveryAddress,
   }) {
     final subtotal = cartState.totalPrice;
     const deliveryFee = 50.0;
@@ -30,6 +33,9 @@ class OrderPreviewService {
       id: orderId,
       branchId: branchId,
       customerId: customerId,
+      customerName: customerName.trim(),
+      customerEmail: customerEmail.trim(),
+      deliveryAddress: <String, dynamic>{'line1': deliveryAddress.trim()},
       items: cartState.items
           .map(
             (item) => OrderItem(
@@ -68,6 +74,6 @@ class OrderPreviewService {
       parts.add(product.selectedColor!.name);
     }
 
-    return parts.join(' • ');
+    return parts.join(' - ');
   }
 }
