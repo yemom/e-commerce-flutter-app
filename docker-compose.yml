@@ -1,0 +1,113 @@
+# =============================================================================
+# docker-compose.yml
+# Orchestrates the API server and its MongoDB database for local development
+# and production-equivalent environments.
+#
+# Services
+#   app   — Node.js / Express API  (built from server/Dockerfile)
+#   mongo — MongoDB 7 database     (official image)
+#
+# Usage
+#   Start:   docker compose up -d --build
+#   Logs:    docker compose logs -f app
+#   Stop:    docker compose down
+#   Wipe DB: docker compose down -v
+# =============================================================================
+
+
+# ---------------------------------------------------------------------------
+# Named volume — MongoDB data persists across container restarts.
+# ---------------------------------------------------------------------------
+volumes:
+  mongo_data:
+
+# ---------------------------------------------------------------------------
+# Shared network — services communicate by their service name, e.g.
+#   MONGODB_URI=mongodb://mongo:27017/ecommerce_app
+# ---------------------------------------------------------------------------
+networks:
+  backend:
+
+services:
+
+  # -------------------------------------------------------------------------
+  # mongo — MongoDB 7 database
+  # -------------------------------------------------------------------------
+  mongo:
+    image: mongo:7                 # Pinned major version for reproducibility.
+    container_name: gulit_mongo
+    restart: unless-stopped       # Auto-restart on host reboot; stop manually.
+
+    # Load shared backend environment values.
+    env_file:
+      - ./server/.env
+
+    environment:
+      # Creates a root user on first boot — used only inside the container network.
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-mongoAdmin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASS:-changeme}
+      MONGO_INITDB_DATABASE: ecommerce_app
+
+    volumes:
+      - mongo_data:/data/db       # Persist data between restarts.
+
+    networks:
+      - backend
+
+    healthcheck:
+      # mongosh ping — confirms the daemon is accepting connections.
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+    # Expose to the host only for local debugging (e.g. Compass / mongosh).
+    # Remove this block in a fully locked-down production environment.
+    ports:
+      - "27017:27017"
+
+
+  # -------------------------------------------------------------------------
+  # app — Node.js / Express API
+  # -------------------------------------------------------------------------
+  app:
+    build:
+      context: ./server           # Path to the directory that contains the Dockerfile.
+      dockerfile: Dockerfile
+
+    container_name: gulit_api
+    restart: unless-stopped
+
+    # Load backend runtime values from server/.env.
+    env_file:
+      - ./server/.env
+
+    depends_on:
+      mongo:
+        condition: service_healthy  # Wait until MongoDB is ready before starting.
+
+    environment:
+      NODE_ENV: production
+
+      # Prefer the MongoDB URI from server/.env. Fall back to the local
+      # Docker Mongo service when no URI is provided.
+      MONGODB_URI: ${MONGODB_URI:-mongodb://${MONGO_ROOT_USER:-mongoAdmin}:${MONGO_ROOT_PASS:-changeme}@mongo:27017/ecommerce_app?authSource=admin}
+
+    volumes:
+      # Named bind-mount so uploaded product images survive container rebuilds.
+      - ./server/uploads:/app/uploads
+
+    ports:
+      - "${PORT:-8000}:8000"      # Expose the API on the host.
+
+    networks:
+      - backend
+
+    healthcheck:
+      # Hit the /api/health endpoint defined in routes/health.js.
+      test: ["CMD", "wget", "-qO-", "http://localhost:8000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s

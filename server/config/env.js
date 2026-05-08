@@ -2,8 +2,11 @@
 const path = require("path");
 const dotenv = require("dotenv");
 
-// Always load environment values from server/.env.
-dotenv.config({ path: path.resolve(__dirname, "..", ".env") });
+// Load environment values from server/.env in development only.
+// In production (Docker), env vars are injected by Docker Compose.
+if (process.env.NODE_ENV !== "production") {
+  dotenv.config({ path: path.resolve(__dirname, "..", ".env") });
+}
 
 // Core runtime values.
 const port = Number(process.env.PORT || 8000);

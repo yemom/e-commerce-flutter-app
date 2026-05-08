@@ -219,3 +219,55 @@ flutter run --dart-define=APP_API_BASE_URL=http://YOUR_PC_LAN_IP:8000/api
 ```
 
 
+## Running with Docker
+
+Quick steps to run the backend + MongoDB using Docker Compose from the project root.
+
+1. Copy and edit the environment template:
+
+```bash
+cp server/.env.example server/.env
+# Edit server/.env and fill real secrets
+```
+
+2. Create the uploads folder (bind-mount target):
+
+```powershell
+mkdir .\server\uploads
+```
+
+3. Build and start services (uses Docker Compose v2 syntax):
+
+```bash
+docker compose up -d --build
+```
+
+4. Useful commands:
+
+```bash
+docker compose ps
+docker compose logs -f app
+docker compose logs -f mongo
+docker compose down            # stop and remove containers
+docker compose down -v         # stop and remove containers + volumes (wipe DB)
+```
+
+5. Verify the API health endpoint:
+
+```
+http://localhost:8000/api/health
+```
+
+Important env vars (set in `server/.env`)
+
+- `PORT` — host port to bind the API (default `8000`).
+- `JWT_SECRET` — required for signing tokens.
+- `SUPER_ADMIN_EMAIL`, `SUPER_ADMIN_PASSWORD` — seeded admin account.
+- `MONGODB_URI` — optional: leave unset to use the local `mongo` service; set to an Atlas URI to use external DB.
+- `MONGO_ROOT_USER`, `MONGO_ROOT_PASS` — used only if running the included local `mongo` service.
+
+See `server/.env.example` for a sanitized template you can copy.
+
+---
+
+

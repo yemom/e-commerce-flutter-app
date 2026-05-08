@@ -21,7 +21,7 @@ import 'package:e_commerce_app_with_django/driver_app/services/api_service.dart'
 import 'package:e_commerce_app_with_django/driver_app/services/auth_service.dart';
 
 class _TestMainAuthNotifier extends main_auth.AuthNotifier {
-  _TestMainAuthNotifier(Ref ref, main_auth.AuthState initial) : super(ref) {
+  _TestMainAuthNotifier(super.ref, main_auth.AuthState initial) {
     state = initial;
   }
 

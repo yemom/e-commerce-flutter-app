@@ -1,0 +1,20 @@
+# Never copy local node_modules — they are reinstalled inside the image.
+node_modules
+
+# Git history is not needed inside the container.
+.git
+.gitignore
+
+# Local environment file — secrets are injected via docker-compose environment/env_file.
+.env
+
+# Test artefacts and local logs.
+test
+coverage
+*.log
+*.ps1
+
+# Editor noise.
+.idea
+.vscode
+.tmp
