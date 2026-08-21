@@ -19,6 +19,20 @@ const { createUploadsRouter } = require("./routes/uploads");
 function buildApp() {
   const app = express();
 
+  // Enhance API security and set smooth HTTP headers
+  const helmet = require("helmet");
+  app.use(helmet());
+
+  // Rate Limiting to prevent brute-force/DDoS
+  const rateLimit = require("express-rate-limit");
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    message: { success: false, message: "Too many requests from this IP, please try again later." },
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+  app.use("/api", limiter);
   // CORS is opened either for all origins ('*') or for the explicit allow-list from .env.
   app.use(
     cors({

@@ -49,3 +49,62 @@ target/
 *.war
 application-secrets.properties
 application-local.properties
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+.classpath
+.project
+.settings/
+bin/
+target/
+
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+.flattened-pom.xml
+.m2/
+
+# Gradle
+.gradle/
+build/
+gradle-wrapper.properties
+
+# Environment
+.env
+.env.local
+.env.*.local
+*.jks
+*.p12
+
+# Application
+*.log
+logs/
+*.pid
+*.seed
+
+# Database
+*.db
+*.sqlite
+*.h2.db
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Test coverage
+coverage/
+jacoco.csv
+.jacoco.exec
+
+# Docker
+docker-compose.override.yml
